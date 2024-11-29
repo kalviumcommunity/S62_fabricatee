@@ -1,6 +1,6 @@
 # Fabricatee - Custom Tailored Clothing E-Commerce Platform
 
-Fabricatee is a completely custom clothing store. What sets Fabricatee apart is that it offers a tailored experience where clients can customize their selected fabrics and have them expertly stitched to precise measurements, giving the perfect fit for every order. This application will also include a comprehensive dashboard for the vendors and the admin.
+Fabricatee is a completely custom clothing store. What sets Fabricatee apart is that it offers a tailored experience where clients can customize their selected fabrics and have them expertly stitched to precise measurements, giving the perfect fit for every order. This application will also include a comprehensive dashboard for the vendors and the admin to check the orders and the live updates.
 
 ---
 
