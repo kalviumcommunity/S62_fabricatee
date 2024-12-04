@@ -25,7 +25,7 @@ app.get('/ping', (req, res)=>{
     res.status(200).json({status:"OK", timestamp: new Date()});
 })
 
-app.listen(PORT, ()=>{
+const server = app.listen(PORT, ()=>{
     console.log(`Server Listening`);
 })
 
@@ -34,7 +34,7 @@ process.on("unhandledRejection", (err) => {
     console.error(`Unhandled Rejection: ${err.message}`);
     console.log("Shutting down the server due to unhandled promise rejection.");
 
-    server.close(() => {
+    app.close(() => {
         process.exit(1); // Exit with failure code
     });
 });
