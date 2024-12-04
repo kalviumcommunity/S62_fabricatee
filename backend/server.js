@@ -5,8 +5,7 @@ import cors from 'cors'
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5173;
-const FRONTEND_URL = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
+const PORT = process.env.PORT;
 
 app.use(express.json());
 app.use(cors());
@@ -19,5 +18,5 @@ app.get('/ping', (req, res)=>{
 })
 
 app.listen(PORT, ()=>{
-    console.log(`Server Listening on ${FRONTEND_URL}`);
+    console.log(`Server Listening`);
 })
