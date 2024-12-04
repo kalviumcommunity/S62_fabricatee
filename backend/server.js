@@ -11,12 +11,18 @@ app.use(express.json());
 app.use(cors());
 
 app.get('/', (req, res)=>{
-    res.status(200).send("Response");
+    res.status(200).json({
+        message: "Welcome to the API",
+    });
 })
 app.get('/ping', (req, res)=>{
     res.status(200).json({status:"OK", timestamp: new Date()});
 })
 
-app.listen(PORT, ()=>{
-    console.log(`Server Listening`);
-})
+try{
+    app.listen(PORT, ()=>{
+        console.log(`Server Listening`);
+    })
+}catch(err){
+    console.log(`Error in starting server: ${err}`);
+}
