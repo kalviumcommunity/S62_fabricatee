@@ -1,6 +1,8 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
+import {connectDB} from './config/db.js'
+import userRouter from './routes/user.route.js'
 
 dotenv.config();
 
@@ -11,6 +13,7 @@ const PORT = process.env.PORT;
 process.on("uncaughtException", (err) => {
     console.log(`Error: ${err.message}`);
     console.log(`shutting down the server for handling uncaught exception`);
+    process.exit(1);
 });
 
 app.use(express.json());
@@ -25,8 +28,10 @@ app.get('/ping', (req, res)=>{
     res.status(200).json({status:"OK", timestamp: new Date()});
 })
 
-const server = app.listen(PORT, ()=>{
+// app.use('/api/user', userRouter);
 
+const server = app.listen(PORT, ()=>{
+    // connectDB();
     console.log(`Server Listening`);
 })
 
