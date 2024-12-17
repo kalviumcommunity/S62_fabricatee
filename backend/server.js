@@ -1,13 +1,13 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
-// import {connectDB} from './config/db.js'
-// import userRouter from './routes/user.route.js'
+//import {connectDB} from './config/db.js'
+//import userRouter from './routes/user.route.js'
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 8000;
 
 // Handling uncaught Exception when setting up backend server
 process.on("uncaughtException", (err) => {
