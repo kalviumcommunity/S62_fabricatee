@@ -2,11 +2,10 @@ import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
 import {connectDB} from './config/db.js'
-import userRouter from './routes/user.route.js'
+import app from './app.js'
 
 dotenv.config();
 
-const app = express();
 const PORT = process.env.PORT || 8000;
 
 // Handling uncaught Exception when setting up backend server
@@ -27,8 +26,6 @@ app.get('/', (req, res)=>{
 app.get('/ping', (req, res)=>{
     res.status(200).json({status:"OK", timestamp: new Date()});
 })
-
-app.use('/api/user', userRouter);
 
 const server = app.listen(PORT, ()=>{
     connectDB();
