@@ -8,11 +8,13 @@ function Login() {
   const formItems = [
     {
       fieldname: "email",
-      label: "Email address"
+      label: "Email address",
+      type: "text",
     },
     {
       fieldname: "password",
-      label: "Password"
+      label: "Password",
+      type: "password",
     }
   ]
 
@@ -49,7 +51,7 @@ function Login() {
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         {error&&<span className='text-red-600 font-normal'>{error}</span>}
 
-        <SingleForm formItems={formItems} handleSubmit={handleSubmit} data={data} setData={setData} submitTxt="Log In"/>
+        <SingleForm formItems={formItems} handleSubmit={handleSubmit} data={data} setData={setData} submitTxt="Log In" setError={setError}/>
 
         <p className="mt-10 text-center text-sm/6 text-gray-500">
           Don't have an account?{' '}

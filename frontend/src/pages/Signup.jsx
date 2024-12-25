@@ -1,22 +1,28 @@
 import React, { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {Validate} from '../../validation.js'
 import SingleForm from '../components/SingleForm.jsx'
+import axios from 'axios'
 
 function Signup() {
+
+  const navigator = useNavigate();
 
   const formItems = [
     {
       fieldname : "name",
-      label: "Name"
+      label: "Name",
+      type: "text",
     },
     {
       fieldname: "email",
-      label: "Email address"
+      label: "Email address",
+      type: "text",
     },
     {
       fieldname: "password",
-      label: "Password"
+      label: "Password",
+      type: "password",
     }
   ]
 
@@ -30,9 +36,11 @@ function Signup() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const NameV = Validate.validateName(data.name);
-    const EmailV = Validate.validateEmail(data.email);
-    const PassV = Validate.validatePass(data.password);
+    const {name, email, password} = data;
+
+    const NameV = Validate.validateName(name);
+    const EmailV = Validate.validateEmail(email);
+    const PassV = Validate.validatePass(password);
 
 
     if(typeof NameV=='string' && NameV.length>1){
@@ -45,6 +53,23 @@ function Signup() {
       return setError(PassV);
     }
 
+    const formDataBody = new FormData();
+    formDataBody.append("name", name);
+    formDataBody.append("email", email);
+    formDataBody.append("password", password);
+
+    axios.post("http://localhost:8000/api/user", formDataBody, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then(()=>{
+        navigator("/");
+      })
+      .catch(err=>{
+        console.log((err.response)?err.response.data.message:"Error in User Creation");
+        setError((err.response)?err.response.data.message:"Error in User Creation");
+      });
   }
 
   return (
@@ -58,7 +83,7 @@ function Signup() {
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         {error&&<span className='text-red-600 font-normal'>{error}</span>}
 
-        <SingleForm formItems={formItems} handleSubmit={handleSubmit} data={data} setData={setData} submitTxt="Sign Up"/>
+        <SingleForm formItems={formItems} handleSubmit={handleSubmit} data={data} setData={setData} submitTxt="Sign Up" setError={setError}/>
 
         <p className="mt-10 text-center text-sm/6 text-gray-500">
           Have an account?{' '}

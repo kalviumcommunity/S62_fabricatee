@@ -28,10 +28,10 @@ export const Validate = {
             return 'Password should have lowercase characters a-z';
         }
         if(!passwordRegex.hasUpperCase.test(pwd)){
-            return 'Password should have uppercase characters a-z';
+            return 'Password should have uppercase characters A-Z';
         }
         if(!passwordRegex.hasSpecialChar.test(pwd)){
-            return 'Password should have uppercase characters a-z';
+            return 'Password should have special characters';
         }
         return true;
     },
