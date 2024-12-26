@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {Validate} from '../../validation.js'
 import SingleForm from '../components/SingleForm.jsx'
+import axios from 'axios'
 
 function Login() {
+
+  const navigate = useNavigate();
 
   const formItems = [
     {
@@ -27,16 +30,34 @@ function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const EmailV = Validate.validateEmail(data.email);
-    const PassV = Validate.validatePass(data.password);
+    const {email, password} = data;
 
-    if(typeof EmailV=='string' && EmailV.length>1){
-      return setError(EmailV);
-    }
-    if(typeof PassV=='string' && PassV.length>1){
-      return setError(PassV);
-    }
+    // const EmailV = Validate.validateEmail(email);
+    // const PassV = Validate.validatePass(password);
 
+    // if(typeof EmailV=='string' && EmailV.length>1){
+    //   return setError(EmailV);
+    // }
+    // if(typeof PassV=='string' && PassV.length>1){
+    //   return setError(PassV);
+    // }
+
+    const formDataBody = new FormData();
+    formDataBody.append("email", email);
+    formDataBody.append("password", password);
+
+    axios.post('http://localhost:8000/api/user/login', formDataBody, {
+      headers: {
+        "Content-Type": "application/json",
+      }
+    })
+      .then(()=>{
+        navigate('/');
+      })
+      .catch((err)=>{
+        console.log((err.response)?((err.response.data.message)?(err.response.data.message):err.response.data):"Error in Log In");
+        setError((err.response)?((err.response.data.message)?(err.response.data.message):err.response.data):"Error in Log In");
+      });
   }
 
   return (
