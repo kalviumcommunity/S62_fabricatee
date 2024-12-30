@@ -21,7 +21,7 @@ export const refreshToken = (req, res) => {
         if(err) res.status(403).json({ success: false, loggedIn: false, message: "Invalid token" });
         const accessToken = jwt.sign({id: user.id, email: user.email, role: user.role}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
         console.log("Refresh Token created");
-        return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, accessToken });
+        return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, userId: user.id, accessToken });
     });
 };
 
@@ -37,7 +37,7 @@ export const userLogin = async(req, res) => {
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: "Incorrect email or password",
+                message: "Incorrect email and/or password",
             });
         }
 
