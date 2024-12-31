@@ -25,7 +25,6 @@ const orderSchema = new mongoose.Schema({
         },
         quantity: {
             type: Number,
-            required: false,
             default: 1,
         },
         price: {
@@ -40,23 +39,45 @@ const orderSchema = new mongoose.Schema({
         }
     }
     ],
-    price:{
-        tax:{
-            type:Number,
-            required: true
-        },
-        delivery:{
+    price: {
+        totalmrp: {
             type: Number,
-            required: true
+            required: true,
+        },
+        discount: {
+            type: Number,
+            required: true,
+        },
+        tax: {
+            type: Number,
+            required: true,
+        },
+        delivery: {
+            type: Number,
+            required: true,
         },
         total: {
             type: Number,
-            required: true
-        }
+            required: true,
+        },
+    },
+    trackingDetails: {
+        deliveryPartner: {
+            type: String,
+            required: false
+        },
+        trackingID: {
+            type: String,
+            required: false
+        },
+        trackingLink: {
+            type: String,
+            required: false
+        },
     },
     orderStatus: {
         type: String,
-        enum: ['Pending', 'In Progress', 'Quality Check', 'Ready for Dispatch', 'Completed', 'Shipped'],
+        enum: ['Pending', 'In Progress', 'Quality Check', 'Ready for Dispatch', 'In Transit', 'Shipped'],
         default: 'Pending',
     }
 }, {timestamps: true});

@@ -1,80 +1,79 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
-const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    phoneNumber: { type: String, required: false , unique: false},
-    password: { type: String, required: true},
-    address: {
-        type: Map,
-        of: new mongoose.Schema(
-            {
-                name: {type: String, required: true},
-                address: {
-                    type: Map,
-                    of: new mongoose.Schema({
-                        line1: { type: String, required: false },
-                        line2: { type: String, required: false },
-                        city: { type: String, required: false },
-                        state: { type: String, required: false },
-                        pincode: { type: Number, required: false },
-                    }),
-                    required: true
-                }
-            }
-        ),
-        required: false
-    }
-    ,
-    measurements: {
-        type: Map,
-        of: new mongoose.Schema({
-            name: { type: String, required: true }, // Profile name
-            dimensions: {
-                type: Map,
-                of: Number, // Key-value pairs for measurements
-                required: true,
-            },
-        }),
-        required: false,
+const itemSchema = new mongoose.Schema({
+    design: { type: mongoose.Schema.Types.ObjectId, ref: "Design", required: true },
+    fabric: { type: mongoose.Schema.Types.ObjectId, ref: "Fabric", required: true },
+    measurementProfile: { type: String, required: true },
+    quantity: { type: Number, default: 1 },
+    price: {
+        fabric: { type: Number, required: true },
+        stitching: { type: Number, required: true },
     },
-    wishlist: [{
-        type: mongoose.Schema.ObjectId,
-        ref:"Product",
-        required: false
-    }],
-    cart: [{
-        type: mongoose.Schema.ObjectId,
-        ref:"Product",
-        required: false
-    }],
-    orders: [
-        {
-            type: mongoose.Schema.ObjectId,
-            ref: "Order"
-        }
-    ],
-    profilePic: {
-        url: {type: String, require: false},
-        alt: {type: String, require: false}
-    }
-}, {timestamps: true});
+});
 
-userSchema.pre('save', async function (next){
-    if(!this.isModified('password')) return next();
-    try{
+const userSchema = new mongoose.Schema(
+    {
+        name: { type: String, required: true },
+        email: { type: String, required: true, unique: true },
+        phoneNumber: { type: String },
+        password: { type: String, required: true },
+        address: [
+            {
+                name: { type: String, required: true },
+                line1: { type: String },
+                line2: { type: String },
+                city: { type: String },
+                state: { type: String },
+                pincode: { type: Number },
+            },
+        ],
+        measurements: {
+            type: Map,
+            of: new mongoose.Schema({
+                name: { type: String, required: true },
+                dimensions: {
+                    type: Map,
+                    of: Number,
+                    required: true,
+                },
+            }),
+        },
+        wishlist: { type: [itemSchema], default: [] },
+        cart: {
+            items: { type: [itemSchema], default: [] },
+            price: {
+                totalmrp: { type: Number, default: 0 },
+                discount: { type: Number, default: 0 },
+                tax: { type: Number, default: 0 },
+                delivery: { type: Number, default: 0 },
+                total: { type: Number, default: 0 },
+            },
+        },
+        orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
+        profilePic: {
+            url: { type: String, default: "https://res.cloudinary.com/dabeupfqq/image/upload/v1735668108/profile_sgelul.png" },
+            alt: { type: String, default: "Profile Photo" },
+        },
+    },
+    { timestamps: true }
+);
+
+// Pre-save middleware for password hashing
+userSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next();
+    try {
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
-        console.log("Password Encrypted");
-    }catch(err){
-        console.log("Password encryption error");
+    } catch (err) {
+        console.log("Password encryption error:", err);
     }
     next();
-})
+});
 
-userSchema.methods.matchPassword = async function (enteredPassword){
-    return await bcrypt.compare(enteredPassword, this.password)
-}
+// Instance method for password validation
+userSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
 
-export default mongoose.model('User', userSchema);
+export default mongoose.model("User", userSchema);
