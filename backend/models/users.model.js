@@ -16,16 +16,15 @@ const userSchema = new mongoose.Schema(
     {
         name: { type: String, required: true },
         email: { type: String, required: true, unique: true },
-        phoneNumber: { type: String },
+        phoneNumber: { type: String, default:"NA" },
         password: { type: String, required: true },
         address: [
             {
                 name: { type: String, required: true },
-                line1: { type: String },
-                line2: { type: String },
-                city: { type: String },
-                state: { type: String },
-                pincode: { type: Number },
+                line1: { type: String, required: true },
+                city: { type: String, required:true },
+                state: { type: String, required: true },
+                pincode: { type: Number, required: true },
             },
         ],
         measurements: {
