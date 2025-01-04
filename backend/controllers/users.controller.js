@@ -19,9 +19,11 @@ export const refreshToken = (req, res) => {
     }
     jwt.verify(token, REFRESH_SECRET_KEY, (err, user)=>{
         if(err) res.status(403).json({ success: false, loggedIn: false, message: "Invalid token" });
-        const accessToken = jwt.sign({id: user.id, email: user.email, role: user.role}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
+        delete user.iat;
+        delete user.exp;
+        const accessToken = jwt.sign({id: user._id, email: user.email, role: user.role, ...user}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
         console.log("Refresh Token created");
-        return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, userId: user.id, accessToken });
+        return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, userId: user._id, accessToken, ...user });
     });
 };
 
@@ -42,8 +44,9 @@ export const userLogin = async(req, res) => {
         }
 
         //Generate Tokens
-        const accessToken = jwt.sign({id: user._id, email: user.email, role: 'user'}, SECRET_KEY, {expiresIn: '15m'}, );
-        const refreshToken = jwt.sign({id: user._id, email: user.email, role: 'user'}, REFRESH_SECRET_KEY, {expiresIn: '7d'}, );
+        const userData = user.toObject();
+        const accessToken = jwt.sign({role: 'user', ...userData}, SECRET_KEY, {expiresIn: '15m'}, );
+        const refreshToken = jwt.sign({role: 'user', ...userData}, REFRESH_SECRET_KEY, {expiresIn: '7d'}, );
         // console.log(accessToken);
         return res.status(200)
             .cookie('token', refreshToken, {
@@ -58,6 +61,7 @@ export const userLogin = async(req, res) => {
                 loggedIn: true,
                 userId: user._id,
                 accessToken,  // The token sent in response body for testing (you can remove this in production)
+                ...userData
             });
     }catch(err){
         console.log("Error in logging in: ", err)

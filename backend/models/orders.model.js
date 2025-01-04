@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema({
     userId: {type: String, required: true},
+    orderId:{ type: String, unique: true, required: true },
     items: [
     {    
         design: {
@@ -75,11 +76,20 @@ const orderSchema = new mongoose.Schema({
             required: false
         },
     },
-    orderStatus: {
+    status: {
         type: String,
-        enum: ['Pending', 'In Progress', 'Quality Check', 'Ready for Dispatch', 'In Transit', 'Shipped'],
+        enum: ['Pending', 'In Progress', 'Quality Check', 'Ready for Dispatch', 'In Transit', 'Shipped', 'Out for Delivery', 'Delivered'],
         default: 'Pending',
     }
 }, {timestamps: true});
+
+orderSchema.pre('save', function (next) {
+    if (!this.customId) {
+        const timestamp = Date.now().toString(36); // Base36 timestamp
+        const random = Math.random().toString(36).substring(2, 8); // Random string
+        this.customId = `ORD-${timestamp}-${random}`; 
+    }
+    next();
+});
 
 export default mongoose.model("Order", orderSchema);
