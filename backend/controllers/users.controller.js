@@ -19,13 +19,13 @@ export const refreshToken = (req, res) => {
     if (!token) {
         return res.status(401).json({ success: false, loggedIn:false, message: "Not logged in" });
     }
-    jwt.verify(token, REFRESH_SECRET_KEY, (err, user)=>{
+    jwt.verify(token, REFRESH_SECRET_KEY, async (err, user)=>{
         if(err) res.status(403).json({ success: false, loggedIn: false, message: "Invalid token" });
-        delete user.iat;
-        delete user.exp;
-        const accessToken = jwt.sign({id: user._id, email: user.email, role: user.role, ...user}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
+        let userData = await User.findById(user._id);
+        userData = userData.toObject();
+        const accessToken = jwt.sign({role: user.role, ...userData}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
         console.log("Refresh Token created");
-        return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, userId: user._id, accessToken, ...user });
+        return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, userId: user._id, accessToken, ...userData });
     });
 };
 
@@ -216,9 +216,6 @@ export const deleteUser = async (req, res) => {
 export const putUser = async (req, res) => {
     const { id } = req.params;
     let body = req.body;
-
-    console.log(req.body);
-    console.log(req?.file);
 
     // Default profile picture URL
     const DEFAULT_PROFILE_PIC = "https://res.cloudinary.com/dabeupfqq/image/upload/v1735668108/profile_sgelul.png";
