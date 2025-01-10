@@ -3,12 +3,11 @@ import mongoose from "mongoose";
 const fabricSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String, required: false },
-    blend: { type: String, required: false },
     tags: [{ type: String, required: false }], // For filtering
-    meterprice: [{mrp:{ type: Number, required: false, default: 0 }, sp: { type: Number, required: false, default: 0 }, cp:{ type: Number, required: false, default: 0 }}],
+    meterprice: {mrp:{ type: Number, required: false, default: 0 }, sp: { type: Number, required: false, default: 0 }, cp:{ type: Number, required: false, default: 0 }},
     stock: {type: Number, required: false, default: 0},
-    images: [
-        {
+    // rating: {type: Number, required: false, default: 0},
+    images:[{
             url: {
                 type: String,
                 required: true,
@@ -17,8 +16,7 @@ const fabricSchema = new mongoose.Schema({
                 type: String,
                 required: false,
             }
-        }
-    ],
+    }],
     vendorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'DashUser',

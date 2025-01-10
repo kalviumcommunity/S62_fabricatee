@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
 import Design from "../models/design.model.js";
+import cloudinary from "../utils/cloudinary.js";
+import fs from 'fs'
+
+const DEFAULT_PROFILE_PIC = "https://res.cloudinary.com/dabeupfqq/image/upload/v1735668108/profile_sgelul.png";
 
 export const getAllDesign = async (req, res) =>{
     try{
@@ -42,13 +46,42 @@ export const getDesign = async (req, res) => {
 
 export const postDesign = async (req, res) => {
     const body = req.body;
+    console.log(body);
+
+    if(typeof body?.stitching?.mrp == 'string'){
+        body.stitching.mrp = parseInt(body.stitching.mrp);
+        body.stitching.sp = parseInt(body.stitching.sp);
+        body.stitching.cp = parseInt(body.stitching.cp);
+    }
+    
+    if(typeof body?.stitching?.commision == 'string'){
+        body.stitching.commision = parseInt(body.stitching.commision);
+    }
+
 
     try{
-        const design = new Design(body);
-        design.save();
+        const arrayImage = req.files.map(async (singleFile, index)=>{
+            return cloudinary.uploader.upload(singleFile.path, {
+                folder: 'designs',
+            }).then((result)=>{
+                fs.unlinkSync(singleFile.path);
+                return {
+                    url: result.url,
+                    alt: singleFile.originalname
+                };
+            });
+        })
+
+        let dataImages = await Promise.all(arrayImage);
+        
+        const newProduct = await Design.create({
+            ...body,
+            images: dataImages
+        })
+
         res.status(201).json({
             success: true,
-            message: body,
+            message: newProduct,
         })
         console.log("Design Added");
     }catch(err){
@@ -56,7 +89,7 @@ export const postDesign = async (req, res) => {
             success: false, 
             message: "server error in adding design",
         });
-        console.log("Error in adding design");
+        console.log("Error in adding design", err);
     }
 }
 
@@ -75,9 +108,9 @@ export const deleteDesign = async (req, res) => {
         await Design.findByIdAndDelete(id);
         res.status(200).json({
             success: true,
-            message:`Blog ${id} deleted`,
+            message:`Design ${id} deleted`,
         });
-        console.log(`User ${id} deleted`);
+        console.log(`Design ${id} deleted`);
     }catch(err){
         res.status(500).json({
             success: false, 

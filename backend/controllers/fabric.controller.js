@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import Fabric from "../models/fabric.model.js";
+import cloudinary from "../utils/cloudinary.js";
+import fs from 'fs'
 
 export const getAllFabric = async (req, res) =>{
     try{
@@ -8,7 +10,7 @@ export const getAllFabric = async (req, res) =>{
         console.log("Fabric Details Fetched");
     }catch(err){
         res.status(500).json({success:false, message:"Server Error"});
-        console.log("Error in Fetching User Details");
+        console.log("Error in Fetching Fabric Details");
     }
 }
 
@@ -42,21 +44,50 @@ export const getFabric = async (req, res) => {
 
 export const postFabric = async (req, res) => {
     const body = req.body;
+    console.log(body);
+
+    if(typeof body?.meterprice?.mrp == 'string'){
+        body.meterprice.mrp = parseInt(body.meterprice.mrp);
+        body.meterprice.sp = parseInt(body.meterprice.sp);
+        body.meterprice.cp = parseInt(body.meterprice.cp);
+    }
+    
+    if(typeof body?.meterprice?.commision == 'string'){
+        body.meterprice.commision = parseInt(body.meterprice.commision);
+    }
+
 
     try{
-        const fabric = new Fabric(body);
-        fabric.save();
+        const arrayImage = req.files.map(async (singleFile, index)=>{
+            return cloudinary.uploader.upload(singleFile.path, {
+                folder: 'fabrics',
+            }).then((result)=>{
+                fs.unlinkSync(singleFile.path);
+                return {
+                    url: result.url,
+                    alt: singleFile.originalname
+                };
+            });
+        })
+
+        let dataImages = await Promise.all(arrayImage);
+        
+        const newProduct = await Fabric.create({
+            ...body,
+            images: dataImages
+        })
+
         res.status(201).json({
             success: true,
-            message: body,
+            message: newProduct,
         })
         console.log("Fabric Added");
     }catch(err){
         res.status(500).json({
             success: false, 
-            message: "server error in adding Fabric",
+            message: "server error in adding fabric",
         });
-        console.log("Error in adding Fabric");
+        console.log("Error in adding fabric", err);
     }
 }
 
@@ -75,22 +106,21 @@ export const deleteFabric = async (req, res) => {
         await Fabric.findByIdAndDelete(id);
         res.status(200).json({
             success: true,
-            message:`Blog ${id} deleted`,
+            message:`Fabric ${id} deleted`,
         });
-        console.log(`User ${id} deleted`);
+        console.log(`Fabric ${id} deleted`);
     }catch(err){
         res.status(500).json({
             success: false, 
-            message: "server error in deleting user data",
+            message: "server error in deleting Fabric data",
         });
-        console.log('User Deletion - Error');
+        console.log('Fabric Deletion - Error');
     }
 }
 
 export const putFabric = async (req, res) => {
     const {id} = req.params;
     const body = req.body;
-
 
     const FabricExists = await Fabric.findById(id); 
     if(!mongoose.Types.ObjectId.isValid(id)||!FabricExists){
@@ -102,7 +132,6 @@ export const putFabric = async (req, res) => {
 
     try{
         const out = await Fabric.findByIdAndUpdate(id, body);
-        console.log(out);
         res.status(200).json({
             success: true,
             message: out
