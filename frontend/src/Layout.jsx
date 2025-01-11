@@ -6,7 +6,9 @@ function Layout() {
   return (
     <>
         <Navbar/>
-        <Outlet/>
+        <div className="pb-16 md:p-0">
+          <Outlet/>
+        </div>
     </>
   )
 }

@@ -1,12 +1,21 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {Validate} from '../../validation.js'
 import SingleForm from '../components/SingleForm.jsx'
 import axios from 'axios'
+import useAuth from '../hooks/useAuth.js'
 
 function Signup() {
 
   const navigator = useNavigate();
+
+  const {auth} = useAuth();
+
+  useEffect(()=>{
+    if(auth.loggedIn)
+      navigator("/profile", {replace: true})
+  }, [auth])
+
 
   const formItems = [
     {
@@ -64,7 +73,7 @@ function Signup() {
       },
     })
       .then(()=>{
-        navigator("/");
+        navigator("/login");
       })
       .catch(err=>{
         console.log((err.response)?err.response.data.message:"Error in User Creation");
