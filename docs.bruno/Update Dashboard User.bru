@@ -1,0 +1,21 @@
+meta {
+  name: Update Dashboard User
+  type: http
+  seq: 10
+}
+
+put {
+  url: http://localhost:8000/api/dashboard/user/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: 6752bee4ed90d517e4410267
+}
+
+body:json {
+  {
+    "name": "Shanaia Jinu"
+  }
+}

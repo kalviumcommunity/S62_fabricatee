@@ -9,6 +9,6 @@ router.post('/', postUser);
 router.get('/', getAllUser);
 router.get('/:id', getUser);
 router.delete('/:id', deleteUser);
-router.put('/:id', putUser);
+router.put('/:id', upload.single("profile"), putUser);
 
 export default router;

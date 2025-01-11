@@ -1,0 +1,35 @@
+meta {
+  name: Create Order
+  type: http
+  seq: 22
+}
+
+post {
+  url: http://localhost:8000/api/order
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "userId": "6752af0edc5e82b9d03b61d0",
+    "items":[
+      {
+        "design": "676823b442b13ea00f436ea2",
+        "fabric": "676824f242b13ea00f436ea7",
+        "measurementProfile": "Josh",
+        "quantity": 1,
+        "price": {
+          "fabric": 500,
+          "stitching": 300
+        }
+      }
+    ],
+    "price": {
+      "tax": 80,
+      "delivery": 50,
+      "total": 930
+    },
+    "orderStatus": "Pending"
+  }
+}

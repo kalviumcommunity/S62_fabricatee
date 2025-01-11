@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema({
     userId: {type: String, required: true},
+    orderId:{ type: String, unique: true, required: true },
     items: [
     {    
         design: {
@@ -25,7 +26,6 @@ const orderSchema = new mongoose.Schema({
         },
         quantity: {
             type: Number,
-            required: false,
             default: 1,
         },
         price: {
@@ -40,25 +40,56 @@ const orderSchema = new mongoose.Schema({
         }
     }
     ],
-    price:{
-        tax:{
-            type:Number,
-            required: true
-        },
-        delivery:{
+    price: {
+        totalmrp: {
             type: Number,
-            required: true
+            required: true,
+        },
+        discount: {
+            type: Number,
+            required: true,
+        },
+        tax: {
+            type: Number,
+            required: true,
+        },
+        delivery: {
+            type: Number,
+            required: true,
         },
         total: {
             type: Number,
-            required: true
-        }
+            required: true,
+        },
     },
-    orderStatus: {
+    trackingDetails: {
+        deliveryPartner: {
+            type: String,
+            required: false
+        },
+        trackingID: {
+            type: String,
+            required: false
+        },
+        trackingLink: {
+            type: String,
+            required: false
+        },
+    },
+    status: {
         type: String,
-        enum: ['Pending', 'In Progress', 'Quality Check', 'Ready for Dispatch', 'Completed', 'Shipped'],
+        enum: ['Pending', 'In Progress', 'Quality Check', 'Ready for Dispatch', 'In Transit', 'Shipped', 'Out for Delivery', 'Delivered'],
         default: 'Pending',
     }
 }, {timestamps: true});
+
+orderSchema.pre('save', function (next) {
+    if (!this.customId) {
+        const timestamp = Date.now().toString(36); // Base36 timestamp
+        const random = Math.random().toString(36).substring(2, 8); // Random string
+        this.customId = `ORD-${timestamp}-${random}`; 
+    }
+    next();
+});
 
 export default mongoose.model("Order", orderSchema);

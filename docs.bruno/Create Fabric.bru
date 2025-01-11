@@ -1,0 +1,20 @@
+meta {
+  name: Create Fabric
+  type: http
+  seq: 16
+}
+
+post {
+  url: http://localhost:8000/api/fabric
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "name": "Raymond Blue Cotton",
+      "meterprice": 570,
+      "vendorId":"676822885bba43b51cd74d7b",
+      "tags": ["ethnic", "mens"]
+  }
+}

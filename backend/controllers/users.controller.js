@@ -3,6 +3,8 @@ import User from '../models/users.model.js'
 import dashUser from '../models/dashUser.model.js'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
+import cloudinary from "../utils/cloudinary.js";
+import fs from 'fs';
 
 dotenv.config();
 
@@ -17,11 +19,13 @@ export const refreshToken = (req, res) => {
     if (!token) {
         return res.status(401).json({ success: false, loggedIn:false, message: "Not logged in" });
     }
-    jwt.verify(token, REFRESH_SECRET_KEY, (err, user)=>{
+    jwt.verify(token, REFRESH_SECRET_KEY, async (err, user)=>{
         if(err) res.status(403).json({ success: false, loggedIn: false, message: "Invalid token" });
-        const accessToken = jwt.sign({id: user.id, email: user.email, role: user.role}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
+        let userData = await User.findById(user._id);
+        userData = userData.toObject();
+        const accessToken = jwt.sign({role: user.role, ...userData}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
         console.log("Refresh Token created");
-        return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, accessToken });
+        return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, userId: user._id, accessToken, ...userData });
     });
 };
 
@@ -37,13 +41,14 @@ export const userLogin = async(req, res) => {
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: "Incorrect email or password",
+                message: "Incorrect email and/or password",
             });
         }
 
         //Generate Tokens
-        const accessToken = jwt.sign({id: user._id, email: user.email, role: 'user'}, SECRET_KEY, {expiresIn: '15m'}, );
-        const refreshToken = jwt.sign({id: user._id, email: user.email, role: 'user'}, REFRESH_SECRET_KEY, {expiresIn: '7d'}, );
+        const userData = user.toObject();
+        const accessToken = jwt.sign({role: 'user', ...userData}, SECRET_KEY, {expiresIn: '15m'}, );
+        const refreshToken = jwt.sign({role: 'user', ...userData}, REFRESH_SECRET_KEY, {expiresIn: '7d'}, );
         // console.log(accessToken);
         return res.status(200)
             .cookie('token', refreshToken, {
@@ -58,6 +63,7 @@ export const userLogin = async(req, res) => {
                 loggedIn: true,
                 userId: user._id,
                 accessToken,  // The token sent in response body for testing (you can remove this in production)
+                ...userData
             });
     }catch(err){
         console.log("Error in logging in: ", err)
@@ -208,29 +214,69 @@ export const deleteUser = async (req, res) => {
 }
 
 export const putUser = async (req, res) => {
-    const {id} = req.params;
-    const body = req.body;
+    const { id } = req.params;
+    let body = req.body;
 
+    // Default profile picture URL
+    const DEFAULT_PROFILE_PIC = "https://res.cloudinary.com/dabeupfqq/image/upload/v1735668108/profile_sgelul.png";
+
+    // Validate user existence
     const userExists = await User.findById(id);
-    if(!mongoose.Types.ObjectId.isValid(id)||!userExists){
+    if (!mongoose.Types.ObjectId.isValid(id) || !userExists) {
         return res.status(404).json({
-            success: false, 
-            message: "user not found",
+            success: false,
+            message: "User not found",
         });
     }
 
-    try{
+    try {
+        // If a new file is uploaded
+        if (req.file) {
+            // Check if the existing profile picture is not the default value
+            if (userExists.profilePic && userExists.profilePic.url && userExists.profilePic.url !== DEFAULT_PROFILE_PIC) {
+                // Extract publicId from the existing profile picture URL
+                const publicId = userExists.profilePic.url.split('/').pop().split('.')[0];
+                try {
+                    await cloudinary.uploader.destroy(`fabricatee_users/${publicId}`);
+                    console.log("Previous profile picture deleted from Cloudinary.");
+                } catch (deleteErr) {
+                    console.error("Error deleting previous profile picture:", deleteErr);
+                }
+            }
+
+            // Upload new profile picture to Cloudinary
+            const uploadedImage = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'fabricatee_users',
+            });
+
+            // Remove the local file after uploading
+            try {
+                fs.unlinkSync(req.file.path);
+                console.log("Temporary file removed.");
+            } catch (unlinkErr) {
+                console.error("Error deleting temporary file:", unlinkErr);
+            }
+
+            // Add new profile picture URL to the body
+            body.profilePic = { url: uploadedImage.url };
+        }
+
+        // Update user with the new data
         await User.findByIdAndUpdate(id, body);
+
         res.status(200).json({
             success: true,
-            message: body
-        })
-        console.log(`User ${id} updated`);
-    }catch(err){
-        res.status(500).json({
-            success: false, 
-            message: "server error in updating user data",
+            message: "User updated successfully",
+            data: body,
         });
-        console.log(`Error - User not updated: ${err}`);
+
+        console.log(`User ${id} updated.`);
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "Server error in updating user data.",
+        });
+
+        console.error("Error updating user:", err);
     }
-}
+};

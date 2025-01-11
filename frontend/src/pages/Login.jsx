@@ -1,12 +1,14 @@
-import React, { useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import {Validate} from '../../validation.js'
 import SingleForm from '../components/SingleForm.jsx'
-import axios from 'axios'
+import axios from '../api/axios.js';
+import useAuth from '../hooks/useAuth.js';
+// import AuthContext from '../context/AuthContext.jsx';
 
 function Login() {
 
   const navigate = useNavigate();
+  const {auth, setAuth} = useAuth();
 
   const formItems = [
     {
@@ -28,6 +30,11 @@ function Login() {
     password:'',
   })
 
+  useEffect(()=>{
+    if(auth.loggedIn)
+      navigate("/profile", {replace: true})
+  }, [auth])
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const {email, password} = data;
@@ -45,18 +52,26 @@ function Login() {
     const formDataBody = new FormData();
     formDataBody.append("email", email);
     formDataBody.append("password", password);
-
-    axios.post('http://localhost:8000/api/user/login', formDataBody, {
+    
+    axios.post('/api/user/auth/login', formDataBody, {
       headers: {
         "Content-Type": "application/json",
-      }
+      },
+      withCredentials: true
     })
-      .then(()=>{
-        navigate('/');
+    .then((res)=>{
+        console.log("bro this is the res", res.data)
+        setAuth({loggedIn: true, userId: res.data?.userId, accessToken: res.data?.accessToken, isLoading: false, ...res.data})
+        setData({
+          email:'',
+          password:'',
+        })
+        setError('');
+        navigate('/', {replace: true});
       })
       .catch((err)=>{
-        console.log((err.response)?((err.response.data.message)?(err.response.data.message):err.response.data):"Error in Log In");
-        setError((err.response)?((err.response.data.message)?(err.response.data.message):err.response.data):"Error in Log In");
+        console.log((err.response)?(err.response.data?.message):"Error in Log In");
+        setError((err.response)?(err.response.data?.message):"Something went wrong");
       });
   }
 
