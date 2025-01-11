@@ -9,7 +9,7 @@ const router = Router();
 router.get('/', getAllFabric);
 router.get('/:id', getFabric);
 router.post('/', upload.array("files", 5), objectify, postFabric);
+router.put('/:id', upload.array("files", 5), objectify, putFabric);
 router.delete('/:id', deleteFabric);
-router.put('/:id', putFabric);
 
 export default router;

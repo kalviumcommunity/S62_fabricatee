@@ -9,7 +9,7 @@ const router = Router();
 router.get('/', getAllDesign);
 router.get('/:id', getDesign);
 router.post('/', upload.array("files", 5), objectify, postDesign);
+router.put('/:id', upload.array("files", 5), objectify, putDesign);
 router.delete('/:id', deleteDesign);
-router.put('/:id', putDesign);
 
 export default router;

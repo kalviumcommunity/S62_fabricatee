@@ -46,7 +46,6 @@ export const getDesign = async (req, res) => {
 
 export const postDesign = async (req, res) => {
     const body = req.body;
-    console.log(body);
 
     if(typeof body?.stitching?.mrp == 'string'){
         body.stitching.mrp = parseInt(body.stitching.mrp);
@@ -124,16 +123,40 @@ export const putDesign = async (req, res) => {
     const {id} = req.params;
     const body = req.body;
 
+    if(typeof body?.stitching?.mrp == 'string'){
+            body.stitching.mrp = parseInt(body.stitching.mrp);
+            body.stitching.sp = parseInt(body.stitching.sp);
+            body.stitching.cp = parseInt(body.stitching.cp);
+    }
+    if(typeof body?.commision == 'string'){
+        body.commision = parseInt(body.commision);
+    }
 
-    const designExists = await findById(id); 
-    if(!mongoose.Types.ObjectId.isValid(id)||!designExists){
+    const DesignExists = await Design.findById(id); 
+    if(!mongoose.Types.ObjectId.isValid(id)||!DesignExists){
         return res.status(404).json({
             success: false, 
-            message: "design not found",
+            message: "Design not found",
         });
     }
 
     try{
+        const arrayImage = req.files.map(async (singleFile, index)=>{
+            return cloudinary.uploader.upload(singleFile.path, {
+                folder: 'fabrics',
+            }).then((result)=>{
+                fs.unlinkSync(singleFile.path);
+                return {
+                    url: result.url,
+                    alt: singleFile.originalname
+                };
+            });
+        })
+
+        let dataImages = await Promise.all(arrayImage);
+        if(dataImages.length>0) body.images = dataImages;
+
+
         await Design.findByIdAndUpdate(id, body);
         res.status(200).json({
             success: true,

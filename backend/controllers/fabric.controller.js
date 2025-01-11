@@ -122,6 +122,15 @@ export const putFabric = async (req, res) => {
     const {id} = req.params;
     const body = req.body;
 
+    if(typeof body?.meterprice?.mrp == 'string'){
+        body.meterprice.mrp = parseInt(body.meterprice.mrp);
+        body.meterprice.sp = parseInt(body.meterprice.sp);
+        body.meterprice.cp = parseInt(body.meterprice.cp);
+    }
+    if(typeof body?.stock == 'string'){
+        body.stock = parseInt(body.stock);
+    }
+
     const FabricExists = await Fabric.findById(id); 
     if(!mongoose.Types.ObjectId.isValid(id)||!FabricExists){
         return res.status(404).json({
@@ -131,10 +140,25 @@ export const putFabric = async (req, res) => {
     }
 
     try{
-        const out = await Fabric.findByIdAndUpdate(id, body);
+        const arrayImage = req.files.map(async (singleFile, index)=>{
+            return cloudinary.uploader.upload(singleFile.path, {
+                folder: 'fabrics',
+            }).then((result)=>{
+                fs.unlinkSync(singleFile.path);
+                return {
+                    url: result.url,
+                    alt: singleFile.originalname
+                };
+            });
+        })
+
+        let dataImages = await Promise.all(arrayImage);
+        if(dataImages.length>0) body.images = dataImages;
+
+        await Fabric.findByIdAndUpdate(id, body);
         res.status(200).json({
             success: true,
-            message: out
+            message: body
         })
         console.log(`Fabric ${id} updated`);
     }catch(err){
