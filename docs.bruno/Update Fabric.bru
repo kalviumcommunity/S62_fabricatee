@@ -1,0 +1,21 @@
+meta {
+  name: Update Fabric
+  type: http
+  seq: 18
+}
+
+put {
+  url: http://localhost:8000/api/fabric/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: 675d2f3390e260851a540343
+}
+
+body:json {
+  {
+    "meterprice": 600
+  }
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Update Design
+  type: http
+  seq: 14
+}
+
+put {
+  url: http://localhost:8000/api/design/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: 676823b442b13ea00f436ea2
+}
+
+body:json {
+  {
+    "designerId": "6752bee4ed90d517e4410267"
+  }
+}

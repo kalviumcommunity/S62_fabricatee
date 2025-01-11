@@ -1,0 +1,26 @@
+meta {
+  name: Create Design
+  type: http
+  seq: 12
+}
+
+post {
+  url: http://localhost:8000/api/design
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+      "name": "Raymond Blue Cotton",
+      "blend": "cotton+polyster",
+      "meterprice": 570,
+      "images": [
+          {
+              "url": "https://wannabe.in/cdn/shop/products/PickJesusWhite.png?v=1696858272&width=713",
+              "alt": "Jesus TShirt"
+          }
+      ],
+    "designerId": "6752bee4ed90d517e4410267"
+  }
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Create Dashboard User
+  type: http
+  seq: 8
+}
+
+post {
+  url: http://localhost:8000/api/dashboard/user
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Reliance Fabrics",
+    "email": "reliance@gmail.com",
+    "phoneNumber": "+91 1234 56709",
+    "password": "password123",
+    "type": "Vendor"
+  }
+}
