@@ -8,6 +8,7 @@ import { IoHomeOutline } from "react-icons/io5";
 import useAuth from '../hooks/useAuth';
 import logo from '../assets/logo.png'
 import useLogout from '../hooks/useLogout';
+import Cart from './Cart'
 
 const Navbar = () => {
   const { auth } = useAuth();
@@ -47,10 +48,11 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <NavLink to="/cart" className="p-2 flex flex-col items-center text-sm">
+              {/* <NavLink to="/cart" className="p-2 flex flex-col items-center text-sm">
                 <FaCartShopping size="20" />
                 <span>Cart</span>
-              </NavLink>
+              </NavLink> */}
+              <Cart/>
               <NavLink to="/wishlist" className="p-2 flex flex-col items-center text-sm">
                 <FaRegHeart size="18" />
                 <span>Wishlist</span>

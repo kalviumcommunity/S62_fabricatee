@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Minus, Plus, X, ShoppingCart as CartIcon } from 'lucide-react';
+import { Minus, Plus, X } from 'lucide-react';
+import { FaCartShopping } from "react-icons/fa6";
 import {
   Card,
   CardContent,
@@ -163,7 +164,7 @@ const ShoppingCart = () => {
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" className="relative">
-          <CartIcon className="h-5 w-5" />
+          <FaCartShopping size="20" />
           {items.length > 0 && (
             <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
               {items.length}
