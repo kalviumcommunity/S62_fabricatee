@@ -48,3 +48,4 @@ Fabricatee is a completely custom clothing store. What sets Fabricatee apart is 
 - Custom design uploads.
 - Scroll and Shop.
 - AI recommendations.
+- Post your fits
