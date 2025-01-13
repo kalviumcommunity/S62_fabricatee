@@ -26,7 +26,7 @@ Fabricatee is a completely custom clothing store. What sets Fabricatee apart is 
 ## Tech Stack
 
 - **Backend**: Node.js, Express.js
-- **Frontend**: React.js, TailwindCSS
+- **Frontend**: React.js, TailwindCSS, Shadcn-UI
 - **Database**: MongoDB (Atlas)
 - **Authentication**: JSON Web Tokens (JWT)
 
