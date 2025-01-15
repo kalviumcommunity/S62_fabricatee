@@ -13,7 +13,7 @@ import Fabrics from './pages/Fabrics'
 import DesignForm from './components/DesignForm'
 import FabricForm from './components/FabricForm'
 import ProfileComp from './pages/ProfileComp'
-import Cart from './components/Cart'
+import FabricPage from './pages/FabricPage'
 
 function App() {
   return (
@@ -30,6 +30,7 @@ function App() {
           <Route path='/designform/:id' element={<DesignForm/>} />
           <Route path='/fabricform' element={<FabricForm/>} />
           <Route path='/fabricform/:id' element={<FabricForm/>} />
+          <Route path='/fabric/:id' element={<FabricPage/>} />
           <Route path='/posts' element={<h4>Posts</h4>} />
           {/* <Route path='/cart' element={<Cart/>} /> */}
           <Route path='/design'>
