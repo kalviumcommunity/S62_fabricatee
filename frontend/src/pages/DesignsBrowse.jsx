@@ -17,7 +17,7 @@ function DesignsBrowse() {
       await axios.get("/api/design")
         .then((res)=>{
           setProducts(res.data.message);
-          console.log(products[0].stitching.mrp);
+          console.log("fetched", products)
         })
         .catch((err)=>{
           console.log(err);
@@ -91,14 +91,16 @@ function DesignsBrowse() {
         />
       </div>
 
+      {/* fix filtering */}
+
       {/* Product Grid */}
       <div className="flex bg-neutral items-start justify-center w-full">
         <div className="grid grid-cols-1 bg-neutral sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-            {filteredProducts.map((product, index) => (
+            {products.map((product, index) => (
               <ProductCard
                 key={index}
                 title={product.name}
-                rating={product.rating}
+                // rating={0}
                 mrp={product.stitching.mrp}
                 sp={product.stitching.sp}
                 url={product.images[0].url}

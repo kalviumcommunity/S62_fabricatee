@@ -1,25 +1,29 @@
 import React from 'react'
 import logo from '../assets/logo.png'
 import InfoCard from '../components/InfoCard'
+import tailored from '../assets/tailored.webp'
+import measurement from '../assets/measurement.webp'
+import design from '../assets/design.jpg'
+import fast from '../assets/fast.webp'
 
 const processData = [
   {
-    imageUrl: "https://via.placeholder.com/150",
+    imageUrl: `${design}`,
     title: "Browse & Select",
     description: <span>Explore a wide range of designs and fabrics. <br/> Choose your favorite combination to customize your look.</span>
   },
   {
-    imageUrl: "https://via.placeholder.com/150",
+    imageUrl: `${measurement}`,
     title: "Provide Measurements",
-    description: <span>Enter your measurements or modify standard ones.<br/> Option to book an appointment for an expert to take your measurements at your location.</span>
+    description: <span>Book an appointment for an expert to take your measurements at your location.<br/> Or <br /> Enter your measurements or modify standard ones. </span>
   },
   {
-    imageUrl: "https://via.placeholder.com/150",
+    imageUrl: `${tailored}`,
     title: "Custom Tailoring",
     description: <span>Skilled tailors craft your outfit with precision and high-quality stitching.</span>
   },
   {
-    imageUrl: "https://via.placeholder.com/150",
+    imageUrl: `${fast}`,
     title: "Fast Delivery",
     description: <span>Receive your custom-tailored clothes quickly, delivered to your doorstep.</span>
   },
@@ -33,7 +37,7 @@ function Home() {
           <img src={logo} alt="logo" className="h-3/4 w-5/6 md:h-2/6 md:w-2/6 self-center"/>
         </div>
       </section>
-      <section className='w-full flex flex-row flex-wrap justify-around bg-light py-8'>
+      <section className='w-full flex flex-row flex-wrap justify-around bg-dark py-8'>
           {processData.map((card, index)=>{
             return(
             <InfoCard

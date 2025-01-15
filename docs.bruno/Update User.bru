@@ -6,16 +6,20 @@ meta {
 
 put {
   url: http://localhost:8000/api/user/:id
-  body: json
+  body: multipartForm
   auth: none
 }
 
 params:path {
-  id: 6752af0edc5e82b9d03b61d0
+  id: 6752abbb3c7a507317876d96
 }
 
 body:json {
   {
     "name": "Shanaia Jinu"
   }
+}
+
+body:multipart-form {
+  name: Joshua Jinu
 }
