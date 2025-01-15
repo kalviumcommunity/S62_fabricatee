@@ -25,7 +25,6 @@ const Design = () => {
           initial="initial"
           animate="animate"
           whileHover="hover"
-          drag
           dragConstraints={{ left: 0, right: 0 }}
         >
           {/* Background and Overlay */}
@@ -56,7 +55,6 @@ const Design = () => {
           initial="initial"
           animate="animate"
           whileHover="hover"
-          drag
           dragConstraints={{ left: 0, right: 0 }}
         >
           {/* Background and Overlay */}
