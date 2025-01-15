@@ -4,6 +4,10 @@ Fabricatee is a completely custom clothing store. What sets Fabricatee apart is 
 
 ---
 
+**Deployment Link**: https://fabricatee.pages.dev/
+
+---
+
 ## Key Features
 
 - **User Features**:
