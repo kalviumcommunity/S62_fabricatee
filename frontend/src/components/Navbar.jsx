@@ -38,12 +38,12 @@ const Navbar = () => {
                 <NavLink to="/" className="p-2 hover:text-blue-600">
                   Home
                 </NavLink>
-                <NavLink to="/design" className="p-2 hover:text-blue-600">
-                  Design
+                <NavLink to="/shop" className="p-2 hover:text-blue-600">
+                  Shop
                 </NavLink>
-                <NavLink to="/posts" className="p-2 hover:text-blue-600">
+                {/* <NavLink to="/posts" className="p-2 hover:text-blue-600">
                   Posts
-                </NavLink>
+                </NavLink> */}
               </div>
             </div>
 
