@@ -4,7 +4,14 @@ import bcrypt from "bcryptjs";
 const itemSchema = new mongoose.Schema({
     design: { type: mongoose.Schema.Types.ObjectId, ref: "Design", required: true },
     fabric: { type: mongoose.Schema.Types.ObjectId, ref: "Fabric", required: true },
-    measurementProfile: { type: String, required: true },
+    measurementProfile: { 
+        chest: {type: String, required: false}, 
+        waist: {type: String, required: false}, 
+        hips: {type: String, required: false}, 
+        length: {type: String, required: false}, 
+        shoulders: {type: String, required: false}, 
+        sleeves: {type: String, required: false}    
+    },
     quantity: { type: Number, default: 1 },
     price: {
         fabric: { type: Number, required: true },
@@ -44,7 +51,6 @@ const userSchema = new mongoose.Schema(
             price: {
                 totalmrp: { type: Number, default: 0 },
                 discount: { type: Number, default: 0 },
-                tax: { type: Number, default: 0 },
                 delivery: { type: Number, default: 0 },
                 total: { type: Number, default: 0 },
             },
