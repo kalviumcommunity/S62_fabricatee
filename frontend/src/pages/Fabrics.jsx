@@ -109,6 +109,7 @@ function Fabrics() {
                     ? product.images[0].url
                     : logo
                 }
+                priceType='fabric'
 
                 onUpdate={(auth.loggedIn)?()=>{navigator(`/fabricform/${product._id}`)}:undefined}
                 onDelete={(auth.loggedIn)?()=>{console.log("Update", product._id)}:undefined}

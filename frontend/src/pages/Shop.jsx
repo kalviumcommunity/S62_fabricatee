@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import fabricImg from '../assets/fabric.jpg';
 import designImg from '../assets/design.jpg';
 
-const Design = () => {
+const Shop = () => {
   const cardVariants = {
     initial: { opacity: 0, y: 30 },
     animate: { opacity: 1, y: 0, transition: { duration: 1 , ease: 'easeInOut' } },
@@ -19,7 +19,7 @@ const Design = () => {
       <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-3/4">
         {/* Browse Designs Card */}
         <motion.a
-          href="/design/designs"
+          href="/shop/designs"
           className="relative flex-1 min-h-[17rem] rounded-lg shadow-lg cursor-pointer group hover:shadow-xl"
           variants={cardVariants}
           initial="initial"
@@ -49,7 +49,7 @@ const Design = () => {
 
         {/* Browse Fabrics Card */}
         <motion.a
-          href="/design/fabrics"
+          href="/shop/fabrics"
           className="relative flex-1 min-h-[17rem] rounded-lg shadow-lg cursor-pointer group hover:shadow-xl"
           variants={cardVariants}
           initial="initial"
@@ -81,4 +81,4 @@ const Design = () => {
   );
 };
 
-export default Design;
+export default Shop;

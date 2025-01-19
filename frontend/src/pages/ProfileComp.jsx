@@ -88,56 +88,7 @@ const ProfileComp = (props) => {
   const [addresses, setAddress] = useState([]);
   const [addressError, setAddressError] = useState();
 
-  const [wishlist, setWishlist] = useState([
-      // {
-      //   _id: "w1",
-      //   title: "Fabric",
-      //   design: { 
-      //     name: "Floral Paradise", 
-      //     rating: 4.7,
-      //     reviews: 128,
-      //    },
-      //   fabric: { 
-      //     name: "Pure Silk",
-      //     rating: 4.5,
-      //     reviews: 128,
-      //     meterprice: { sp: 99, mrp: 149 }
-      //   },
-      //   images: [{ url: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c25lYWtlcnxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60" }]
-      // },
-      // {
-      //   _id: "w2",
-      //   title: "Geometric",
-      //   design: { 
-      //     name: "Geometric Dreams", 
-      //     rating: 4.8,
-      //     reviews: 95,
-      //   },
-      //   fabric: {
-      //     name: "Cotton Blend",
-      //     rating: 4.6,
-      //     reviews: 95,
-      //     meterprice: { sp: 79, mrp: 119 }
-      //   },
-      //   images: [{ url: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c25lYWtlcnxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60" }]
-      // },
-      // {
-      //   _id: "w3",
-      //   title: "Waves",
-      //   design: { 
-      //     name: "Abstract Waves", 
-      //     rating: 4.9, 
-      //     reviews: 100 
-      //   },
-      //   fabric: {
-      //     name: "Linen",
-      //     rating: 4.7,
-      //     reviews: 156,
-      //     meterprice: { sp: 89, mrp: 129 }
-      //   },
-      //   images: [{ url: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c25lYWtlcnxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60" }]
-      // }
-    ]);
+  const [wishlist, setWishlist] = useState([]);
 
   const navItems = [
     { id: 'profile', label: 'Profile', icon: FiUser },
@@ -152,6 +103,8 @@ const ProfileComp = (props) => {
       setProfileFormData(prev=> ({...prev, ...auth}));
       setOrders(auth.orders||[]);
       setAddress(auth.address||[]);
+      setWishlist(auth.wishlist||[]);
+      console.log(auth.wishlist)
       console.log("user authenticated - ProfileComp")
     }else{
       navigator('/login')
@@ -181,10 +134,6 @@ const ProfileComp = (props) => {
       reader.readAsDataURL(file);
     }
   };
-
-  useEffect(()=>{
-    console.log(addresses)
-  }, [addresses])
 
   const handleAddressSubmit = async (addressData) =>{
     if(!addressData.line1 || !addressData.state || !addressData.city || !addressData.pincode || !addressData.name){
@@ -231,36 +180,50 @@ const ProfileComp = (props) => {
     }
   } 
 
+  const handleWishlistDelete = async (wishlistid) =>{
+    const updated = wishlist.filter((item)=>{
+      return item._id!=wishlistid;
+    })
+    try {
+      const res = await axios.put(`/api/user/${auth._id}`, {wishlist: updated});
+      console.log('wishlist updated',res);
+      setAuth((prev) => ({ ...prev, wishlist: updated }));
+      navigator('/wishlist');
+    } catch (error) {
+      console.log(error.message)
+    }
+  }
+
   const triggerImageUpload = () => {
     fileInputRef.current?.click();
   };
 
-    const handleProfileSubmit = async (e) => {
-      e.preventDefault();
-      setUserProfile(profileFormData);
-      setProfileFormData(prev => ({ ...prev, editing: false }));
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    setUserProfile(profileFormData);
+    setProfileFormData(prev => ({ ...prev, editing: false }));
 
-      try {
-        const formDataBody = new FormData();
-        formDataBody.append("name", profileFormData.name);
-        formDataBody.append("email", profileFormData.email);
-        formDataBody.append("phoneNumber", profileFormData.phoneNumber);
-        formDataBody.append("profile", profileFormData.file);
+    try {
+      const formDataBody = new FormData();
+      formDataBody.append("name", profileFormData.name);
+      formDataBody.append("email", profileFormData.email);
+      formDataBody.append("phoneNumber", profileFormData.phoneNumber);
+      formDataBody.append("profile", profileFormData.file);
 
-        console.log(formDataBody);
+      console.log(formDataBody);
 
-        await axios.put(`/api/user/${auth.userId}`, formDataBody, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+      await axios.put(`/api/user/${auth.userId}`, formDataBody, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+        .then(()=>{
+          setAuth(prev=>({...prev, name:profileFormData.name, email: profileFormData.email, phoneNumber: profileFormData.phoneNumber, profilePic: profileFormData.profilePic}))
         })
-          .then(()=>{
-            setAuth(prev=>({...prev, name:profileFormData.name, email: profileFormData.email, phoneNumber: profileFormData.phoneNumber, profilePic: profileFormData.profilePic}))
-          })
-      } catch (error) {
-        console.log(`Error in User Updation: `, error.message);
-      }
+    } catch (error) {
+      console.log(`Error in User Updation: `, error.message);
     }
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -451,7 +414,7 @@ const ProfileComp = (props) => {
               )}
 
               {activeTab === 'wishlist' && (
-                <WishlistComp wishlist={wishlist}/>
+                <WishlistComp wishlist={wishlist} handleDelete={handleWishlistDelete}/>
               )}
 
               {activeTab === 'addresses' && (

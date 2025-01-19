@@ -1,11 +1,11 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Navbar from './components/Navbar'
 import { Outlet } from 'react-router-dom'
 
-function Layout() {
+function Layout({nav=true}) {
   return (
     <>
-        <Navbar/>
+        {nav&&<Navbar/>}
         <div className="pb-16 md:p-0">
           <Outlet/>
         </div>

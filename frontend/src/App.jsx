@@ -7,13 +7,14 @@ import Login from './pages/Login'
 import Layout from './Layout'
 import RequireAuth from './pages/RequireAuth'
 import PersistLogin from './components/PersistLogin'
-import Design from './pages/Design'
+import Shop from './pages/Shop'
 import DesignsBrowse from './pages/DesignsBrowse'
 import Fabrics from './pages/Fabrics'
 import DesignForm from './components/DesignForm'
 import FabricForm from './components/FabricForm'
 import ProfileComp from './pages/ProfileComp'
 import FabricPage from './pages/FabricPage'
+import CustomizeDesignPage from './pages/CustomizeDesignPage.jsx'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path='/about' element={<About/>} />
           <Route path='/wishlist' element={<ProfileComp activeTab='wishlist'/>} />
           <Route path='/orders' element={<ProfileComp activeTab='orders'/>} />
+          <Route path='/profile/address' element={<ProfileComp activeTab='addresses'/>} />
           <Route path='/designform' element={<DesignForm/>} />
           <Route path='/designform/:id' element={<DesignForm/>} />
           <Route path='/fabricform' element={<FabricForm/>} />
@@ -33,8 +35,8 @@ function App() {
           <Route path='/fabric/:id' element={<FabricPage/>} />
           <Route path='/posts' element={<h4>Posts</h4>} />
           {/* <Route path='/cart' element={<Cart/>} /> */}
-          <Route path='/design'>
-            <Route index element={<Design/>} />
+          <Route path='/shop'>
+            <Route index element={<Shop/>} />
             <Route path='designs' element={<DesignsBrowse/>} />
             <Route path='fabrics' element={<Fabrics/>} />
           </Route>
@@ -42,6 +44,9 @@ function App() {
             <Route path='/profile' element={<ProfileComp/>} />
           </Route>
         </Route>
+      </Route>
+      <Route element={<Layout nav={false}/>}>
+        <Route path='/shop/designs/customize/:id' element={<CustomizeDesignPage/>} />
       </Route>
     </Routes>
   )

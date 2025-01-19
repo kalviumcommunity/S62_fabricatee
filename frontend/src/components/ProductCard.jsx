@@ -14,7 +14,9 @@ function ProductCard({
   onAddToCart,
   btnTxt,
   onUpdate,
-  onDelete
+  onDelete,
+  priceType, // 'per_meter' or 'stitching'
+  productType // 'design', 'fabric', or 'combined'
 }) {
   const renderStars = (rating) => {
     return [...Array(5)].map((_, index) => (
@@ -27,11 +29,17 @@ function ProductCard({
 
   const discountPercentage = mrp && sp ? Math.round(((mrp - sp) / mrp) * 100) : 0;
 
+  const getPriceLabel = () => {
+    if (priceType === 'fabric') return '/meter';
+    if (priceType === 'design') return ' for stitching';
+    return '';
+  };
+
   return (
     <div className="relative m-5 shadow-sm flex w-full max-w-xs flex-col overflow-hidden justify-between rounded-lg border border-gray-100 bg-white">
       <div className="relative">
         {url && (
-          <div className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl">
+          <div className="relative mx-3 mt-3 flex h-auto overflow-hidden rounded-xl">
             <img className="object-cover w-full" src={url} alt={`${design || ''} ${fabric || ''}`} />
             {discount && discountPercentage > 0 && (
               <span className="absolute top-0 left-0 m-2 rounded-full bg-black px-2 text-center text-sm font-medium text-white">
@@ -41,7 +49,6 @@ function ProductCard({
           </div>
         )}
         
-        {/* Action buttons shown only when handlers are provided */}
         {(onUpdate || onDelete) && (
           <div className="absolute top-5 right-5 flex gap-2">
             {onUpdate && (
@@ -68,6 +75,15 @@ function ProductCard({
 
       <div className="mt-4 px-5 pb-5">
         {title && <h5 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h5>}
+
+        {/* Product Type Badge */}
+        {productType && (
+          <div className="mt-2">
+            <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+              {productType.charAt(0).toUpperCase() + productType.slice(1)}
+            </span>
+          </div>
+        )}
 
         {(design || fabric) && (
           <div className="mt-2 space-y-1">
@@ -100,9 +116,14 @@ function ProductCard({
         {(sp || mrp) && (
           <div className="mt-4 flex items-center justify-between">
             <div>
-              {sp !== undefined && <span className="text-2xl font-bold text-slate-900">Rs. {sp}</span>}
               {mrp > sp && (
                 <span className="ml-2 text-sm text-slate-900 line-through">Rs. {mrp}</span>
+              )}{' '}
+              {sp !== undefined && (
+                <span className="text-xl font-semibold text-slate-900">
+                  Rs. {sp}
+                  <span className="text-sm font-normal text-gray-600">{getPriceLabel()}</span>
+                </span>
               )}
             </div>
           </div>

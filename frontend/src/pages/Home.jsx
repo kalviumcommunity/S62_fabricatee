@@ -37,7 +37,7 @@ function Home() {
           <img src={logo} alt="logo" className="h-3/4 w-5/6 md:h-2/6 md:w-2/6 self-center"/>
         </div>
       </section>
-      <section className='w-full flex flex-row flex-wrap justify-around bg-dark py-8'>
+      <section className='w-full flex flex-row flex-wrap justify-around bg-light py-8'>
           {processData.map((card, index)=>{
             return(
             <InfoCard
