@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Minus, Plus, X } from 'lucide-react';
 import { FaCartShopping } from "react-icons/fa6";
 import {
@@ -24,6 +24,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import logo from '@/assets/logo.png'
+import useAuth from '@/hooks/useAuth';
+import { Link, useNavigate } from 'react-router-dom';
 
 const ShoppingCart = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,25 +33,21 @@ const ShoppingCart = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [selectedAddress, setSelectedAddress] = useState('');
   const [couponError, setCouponError] = useState('');
+  const {auth, setAuth} = useAuth();
+  const navigator = useNavigate();
   
   // Sample addresses - in a real app, these would come from an API/database
-  const addresses = [
-    {
-      id: '1',
-      label: 'Home',
-      address: '123 Main St, Apt 4B, New York, NY 10001'
-    },
-    {
-      id: '2',
-      label: 'Office',
-      address: '456 Business Ave, Suite 200, New York, NY 10002'
-    },
-    {
-      id: '3',
-      label: 'Parent\'s House',
-      address: '789 Family Rd, Brooklyn, NY 11201'
-    }
-  ];
+  const [addresses, setAddresses] = useState([]);
+
+  useEffect(() => {
+    setAddresses(auth?.address || []);
+    console.log(auth);
+  }, [auth]);
+
+  useEffect(() => {
+    console.log(addresses);
+  }, [addresses]);
+
 
   // Sample valid coupons - in a real app, these would be verified server-side
   const validCoupons = {
@@ -126,16 +124,17 @@ const ShoppingCart = () => {
     }
   };
 
-  const calculateTax = () => {
-    return (calculateSubtotal() - calculateDiscount()) * 0.1; // 10% tax after discount
-  };
+  // const calculateTax = () => {
+  //   return (calculateSubtotal() - calculateDiscount()) * 0.1; // 10% tax after discount
+  // };
 
   const calculateShipping = () => {
     return items.length > 0 ? 15.99 : 0;
   };
 
   const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscount() + calculateTax() + calculateShipping();
+    return calculateSubtotal() - calculateDiscount() + calculateShipping();
+    // return calculateSubtotal() - calculateDiscount() + calculateTax() + calculateShipping();
   };
 
   const handleApplyCoupon = () => {
@@ -159,6 +158,19 @@ const ShoppingCart = () => {
     setCouponCode('');
     setCouponError('');
   };
+
+  const handleValueChange = (value) => {
+    if (value === 'add-address') {
+      handleAddAddress();
+    } else {
+      setSelectedAddress(value);
+    }
+  };
+
+  const handleAddAddress = () =>{
+    setIsOpen(false);
+    navigator('/profile/address');
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -199,7 +211,7 @@ const ShoppingCart = () => {
                         </button>
                       </div>
                       <div className="text-sm text-gray-500 mt-1">
-                        Color: {item.color} | Size: {item.size}
+                        Fabric: {item.fabric}
                       </div>
                       <div className="text-sm font-medium mt-1">
                         ${item.price.toFixed(2)}
@@ -230,19 +242,26 @@ const ShoppingCart = () => {
             {/* Address Selection */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Delivery Address</label>
-              <Select value={selectedAddress} onValueChange={setSelectedAddress}>
+              <Select value={selectedAddress} onValueChange={handleValueChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select delivery address" />
                 </SelectTrigger>
                 <SelectContent>
-                  {addresses.map(addr => (
-                    <SelectItem key={addr.id} value={addr.id}>
+                  {addresses.map((addr, index) => (
+                    <SelectItem key={index} value={addr}>
                       <div className="text-sm">
-                        <div className="font-medium">{addr.label}</div>
-                        <div className="text-gray-500">{addr.address}</div>
+                        <div className="font-medium">{addr.name}</div>
+                        <div className="text-gray-500 overflow-ellipsis whitespace-nowrap">
+                          {addr.line1}, {addr.city}, {addr.state}
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
+                  <SelectItem value="add-address" onClick={handleAddAddress}>
+                    <div className="text-sm">
+                      <div className="font-medium">Add an Address</div>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -292,10 +311,10 @@ const ShoppingCart = () => {
                   <span>-${calculateDiscount().toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm text-gray-500">
+              {/* <div className="flex justify-between text-sm text-gray-500">
                 <span>Tax (10%)</span>
                 <span>${calculateTax().toFixed(2)}</span>
-              </div>
+              </div> */}
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Shipping</span>
                 <span>${calculateShipping().toFixed(2)}</span>

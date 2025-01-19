@@ -27,13 +27,13 @@ function App() {
           <Route path='/about' element={<About/>} />
           <Route path='/wishlist' element={<ProfileComp activeTab='wishlist'/>} />
           <Route path='/orders' element={<ProfileComp activeTab='orders'/>} />
+          <Route path='/profile/address' element={<ProfileComp activeTab='addresses'/>} />
           <Route path='/designform' element={<DesignForm/>} />
           <Route path='/designform/:id' element={<DesignForm/>} />
           <Route path='/fabricform' element={<FabricForm/>} />
           <Route path='/fabricform/:id' element={<FabricForm/>} />
           <Route path='/fabric/:id' element={<FabricPage/>} />
           <Route path='/posts' element={<h4>Posts</h4>} />
-          <Route path='/shop/designs/customize/:id' element={<CustomizeDesignPage/>} />
           {/* <Route path='/cart' element={<Cart/>} /> */}
           <Route path='/shop'>
             <Route index element={<Shop/>} />
@@ -44,6 +44,9 @@ function App() {
             <Route path='/profile' element={<ProfileComp/>} />
           </Route>
         </Route>
+      </Route>
+      <Route element={<Layout nav={false}/>}>
+        <Route path='/shop/designs/customize/:id' element={<CustomizeDesignPage/>} />
       </Route>
     </Routes>
   )
