@@ -181,14 +181,16 @@ const ProfileComp = (props) => {
   } 
 
   const handleWishlistDelete = async (wishlistid) =>{
+    console.log('previous', wishlist);
     const updated = wishlist.filter((item)=>{
       return item._id!=wishlistid;
     })
+    console.log('updated',updated);
     try {
       const res = await axios.put(`/api/user/${auth._id}`, {wishlist: updated});
       console.log('wishlist updated',res);
       setAuth((prev) => ({ ...prev, wishlist: updated }));
-      navigator('/wishlist');
+      setWishlist(updated);
     } catch (error) {
       console.log(error.message)
     }
