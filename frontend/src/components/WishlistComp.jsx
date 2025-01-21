@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import ProductCard from './ProductCard'
 
-function WishlistComp({wishlist, handleDelete}) {
+function WishlistComp({wishlist, handleDelete, handleMoveToCart}) {
 
   return (
     <div className="p-6">
@@ -17,6 +17,7 @@ function WishlistComp({wishlist, handleDelete}) {
             fabric={item?.fabric?.name}
             btnTxt="Move to Cart"
             onDelete={()=>{handleDelete(item._id)}}
+            onAddToCart={()=>handleMoveToCart(item._id)}
           />
         ))}
       </div>
