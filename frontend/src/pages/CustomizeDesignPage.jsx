@@ -139,8 +139,8 @@ const CustomizeDesignPage = () => {
     try {
       const res = await axios.put(`/api/user/${auth._id}`, {cart: updated});
       console.log('user details updated',res);
-      setAuth((prev) => ({ ...prev, address: updated }));
-      navigator('/home');
+      setAuth((prev) => ({ ...prev, cart: updated }));
+      navigator('/');
     } catch (error) {
       console.log(error.message)
     }
@@ -159,11 +159,17 @@ const CustomizeDesignPage = () => {
     data.price.stitching = selectedDesign?.stitching?.sp;
     const updated = auth?.wishlist;
     updated.push(data);
+    console.log(updated);
     try {
       const res = await axios.put(`/api/user/${auth._id}`, {wishlist: updated});
       console.log('wishlist updated', res);
+      data.design = selectedDesign;
+      data.fabric = selectedFabric;
+      updated.pop();
+      updated.push(data);
+      console.log('authdata', updated);
       setAuth((prev) => ({ ...prev, wishlist: updated }));
-      navigator('/');
+      navigator('/wishlist');
     } catch (error) {
       console.log(error.message)
     }

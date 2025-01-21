@@ -15,18 +15,21 @@ export const refreshToken = (req, res) => {
     const token = req.cookies?.token;
     // console.log("Cookies",req.cookies);
     // console.log("token",token);
-
-    if (!token) {
-        return res.status(401).json({ success: false, loggedIn:false, message: "Not logged in" });
+    try{
+        if (!token) {
+            return res.status(401).json({ success: false, loggedIn:false, message: "Not logged in" });
+        }
+        jwt.verify(token, REFRESH_SECRET_KEY, async (err, user)=>{
+            if(err) res.status(403).json({ success: false, loggedIn: false, message: "Invalid token" });
+            let userData = await User.findById(user._id).populate(["cart.items.design", "cart.items.fabric", "wishlist.design", "wishlist.fabric"]);
+            userData = userData.toObject();
+            const accessToken = jwt.sign({role: user.role, ...userData}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
+            console.log("Refresh Token created");
+            return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, userId: user._id, accessToken, ...userData });
+        });
+    }catch(err){
+        console.log(err);
     }
-    jwt.verify(token, REFRESH_SECRET_KEY, async (err, user)=>{
-        if(err) res.status(403).json({ success: false, loggedIn: false, message: "Invalid token" });
-        let userData = await User.findById(user._id).populate(["cart.items.design", "cart.items.fabric", "wishlist.design", "wishlist.fabric"]);
-        userData = userData.toObject();
-        const accessToken = jwt.sign({role: user.role, ...userData}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
-        console.log("Refresh Token created");
-        return res.status(200).json({ success: true, message: "Refresh Token created", loggedIn: true, userId: user._id, accessToken, ...userData });
-    });
 };
 
 export const userLogin = async(req, res) => {
@@ -48,7 +51,7 @@ export const userLogin = async(req, res) => {
         //Generate Tokens
         const userData = user.toObject();
         const accessToken = jwt.sign({role: 'user', ...userData}, SECRET_KEY, {expiresIn: '15m'}, );
-        const refreshToken = jwt.sign({role: 'user', ...userData}, REFRESH_SECRET_KEY, {expiresIn: '7d'}, );
+        const refreshToken = jwt.sign({role: 'user', _id: userData._id, email: userData.email}, REFRESH_SECRET_KEY, {expiresIn: '7d'}, );
         // console.log(accessToken);
         return res.status(200)
             .cookie('token', refreshToken, {

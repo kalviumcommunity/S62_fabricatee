@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {Validate} from '../../validation.js'
 import SingleForm from '../components/SingleForm.jsx'
-import axios from 'axios'
+import axios from '@/api/axios.js'
 import useAuth from '../hooks/useAuth.js'
 
 function Signup() {
@@ -67,7 +67,7 @@ function Signup() {
     formDataBody.append("email", email);
     formDataBody.append("password", password);
 
-    axios.post("http://localhost:8000/api/user", formDataBody, {
+    axios.post("/api/user", formDataBody, {
       headers: {
         "Content-Type": "application/json",
       },
