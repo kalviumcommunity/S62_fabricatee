@@ -140,7 +140,7 @@ const CustomizeDesignPage = () => {
       const res = await axios.put(`/api/user/${auth._id}`, {cart: updated});
       console.log('user details updated',res);
       setAuth((prev) => ({ ...prev, cart: updated }));
-      navigator('/home');
+      navigator('/');
     } catch (error) {
       console.log(error.message)
     }
