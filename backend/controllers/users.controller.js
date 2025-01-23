@@ -21,7 +21,7 @@ export const refreshToken = (req, res) => {
         }
         jwt.verify(token, REFRESH_SECRET_KEY, async (err, user)=>{
             if(err) res.status(403).json({ success: false, loggedIn: false, message: "Invalid token" });
-            let userData = await User.findById(user._id).populate(["cart.items.design", "cart.items.fabric", "wishlist.design", "wishlist.fabric"]);
+            let userData = await User.findById(user._id).populate(["cart.design", "cart.fabric", "wishlist.design", "wishlist.fabric"]);
             userData = userData.toObject();
             const accessToken = jwt.sign({role: user.role, ...userData}, process.env.SECRET_KEY, {expiresIn: '15m'}); 
             console.log("Refresh Token created");
@@ -36,7 +36,7 @@ export const userLogin = async(req, res) => {
     const {email, password} = req.body;
 
     try{
-        const user = await User.findOne({email: email}).populate(["cart.items.design", "cart.items.fabric", "wishlist.design", "wishlist.fabric"]);
+        const user = await User.findOne({email: email}).populate(["cart.design", "cart.fabric", "wishlist.design", "wishlist.fabric"]);
         if(!user){
             return res.status(401).json({success: false, message: "User not found"});
         }
@@ -173,7 +173,7 @@ export const getUser = async (req, res) => {
     
     
     try{
-        const returned = await User.findById(id).populate(["cart.items.design", "cart.items.fabric", "wishlist.design", "wishlist.fabric"]);
+        const returned = await User.findById(id).populate(["cart.design", "cart.fabric", "wishlist.design", "wishlist.fabric"]);
         if(!returned) return res.status(404).json({
             success: false, 
             message: "user not found",
@@ -185,7 +185,7 @@ export const getUser = async (req, res) => {
             success: false, 
             message: "server error in fetching user data",
         });
-        console.log("Error in Fetching user data");
+        console.log("Error in Fetching user data", err.message);
     }
 }   
 

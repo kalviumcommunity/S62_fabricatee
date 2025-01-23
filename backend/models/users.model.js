@@ -47,13 +47,8 @@ const userSchema = new mongoose.Schema(
         },
         wishlist: { type: [itemSchema], default: [] },
         cart: {
-            items: { type: [itemSchema], default: [] },
-            price: {
-                totalmrp: { type: Number, default: 0 },
-                discount: { type: Number, default: 0 },
-                delivery: { type: Number, default: 0 },
-                total: { type: Number, default: 0 },
-            },
+            type: [itemSchema], 
+            default: []
         },
         orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
         profilePic: {

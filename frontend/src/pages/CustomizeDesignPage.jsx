@@ -131,14 +131,14 @@ const CustomizeDesignPage = () => {
     data.price.fabric = calculateFabricPrice();
     data.price.stitching = selectedDesign?.stitching?.sp;
     const updated = auth?.cart;
-    updated.items.push(data);
-    updated.price.totalmrp += (selectedDesign?.stitching?.mrp+selectedFabric?.meterprice?.mrp);
-    updated.price.discount += (selectedDesign?.stitching?.mrp+selectedFabric?.meterprice?.mrp)-totalPrice;
-    updated.price.total += totalPrice;
-    updated.price.delivery = (updated.price.total>1499)?0:99;
+    updated.push(data);
     try {
       const res = await axios.put(`/api/user/${auth._id}`, {cart: updated});
       console.log('user details updated',res);
+      updated.pop();
+      data.design = selectedDesign;
+      data.fabric = selectedFabric;
+      updated.push(data);
       setAuth((prev) => ({ ...prev, cart: updated }));
       navigator('/');
     } catch (error) {
