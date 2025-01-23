@@ -212,11 +212,11 @@ const ProfileComp = (props) => {
     setWishlist(updatedWishlist);
   
     // Make a copy of the current cart, if the `auth` object exists
-    const currCart = auth?.cart || { items: [] }; // Fallback in case the cart is empty or undefined
+    const currCart = auth?.cart || []; // Fallback in case the cart is empty or undefined
   
     // Add the deleted item to the cart
     if (deletedItem) {
-      currCart.items.push(deletedItem);
+      currCart.push(deletedItem);
       console.log('currCart', currCart)
     }
 
@@ -233,7 +233,7 @@ const ProfileComp = (props) => {
     }
   
 
-  };  
+  };
 
   const triggerImageUpload = () => {
     fileInputRef.current?.click();
