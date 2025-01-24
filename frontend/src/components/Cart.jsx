@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import useAuth from '@/hooks/useAuth';
 import axios from '@/api/axios';
+import { useNavigate } from 'react-router-dom';
 
 const ShoppingCart = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +25,8 @@ const ShoppingCart = () => {
   
   const [cart, setCart] = useState([]);
   const [selectedItems, setSelectedItems] = useState(new Set());
-
+  const navigator = useNavigate();
+ 
   useEffect(() => {
     if(auth.loggedIn && auth.cart) {
       setCart(auth.cart);
@@ -119,13 +121,22 @@ const ShoppingCart = () => {
     return calculateSubtotal() - calculateDiscount() + calculateShipping();
   };
 
+  const handleCheckout = () =>{
+    setIsOpen(false);
+    const items = cart.filter(item => selectedItems.has(item._id));
+    navigator('/checkout', {state:{products:items}});
+  }
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="relative">
-          <FaCartShopping size="30" />
+        <Button variant="ghost" className="relative p-2 mt-2">
+          <div>
+            <FaCartShopping size="35" className='!w-5 !h-5' />
+            <div className="text-xs mt-1 text-gray-600">Cart</div>
+          </div>
           {cart.length > 0 && (
-            <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
+            <Badge className="absolute -top-2 -right-2 h-5 w-5 flex bg-blue-400 items-center justify-center p-0">
               {cart.length}
             </Badge>
           )}
@@ -225,10 +236,13 @@ const ShoppingCart = () => {
 
             <Button 
               className="w-full"
+              onClick={handleCheckout}
               disabled={cart.length === 0 || selectedItems.size === 0}
             >
               {selectedItems.size === 0 ? "Select Items to Checkout" : "Checkout"}
             </Button>
+            <br />
+            <br />
           </div>
         </div>
       </SheetContent>

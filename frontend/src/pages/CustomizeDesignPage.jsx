@@ -37,7 +37,7 @@ const ActionButton = ({ icon, children, variant = 'primary', onClick }) => {
   const baseClasses = "flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors w-full";
   const variants = {
     primary: "bg-blue-600 text-white hover:bg-blue-700",
-    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
+    secondary: "bg-gray-300 text-black hover:bg-gray-200",
     outline: "border-2 border-gray-300 text-gray-700 hover:bg-gray-50"
   };
   
@@ -128,6 +128,7 @@ const CustomizeDesignPage = () => {
     data.fabric = selectedFabric._id;
     data.measurementProfile = measurements.measurements||undefined;
     data.price = {};
+    data.quantity = 1;
     data.price.fabric = calculateFabricPrice();
     data.price.stitching = selectedDesign?.stitching?.sp;
     const updated = auth?.cart;
@@ -155,6 +156,7 @@ const CustomizeDesignPage = () => {
     data.fabric = selectedFabric._id;
     data.measurementProfile = measurements.measurements||undefined;
     data.price = {};
+    data.quantity = 1;
     data.price.fabric = calculateFabricPrice();
     data.price.stitching = selectedDesign?.stitching?.sp;
     const updated = auth?.wishlist;
@@ -242,12 +244,12 @@ const CustomizeDesignPage = () => {
                 </div>
               ) : (
                 <div 
-                  className="mt-3 p-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
+                  className="mt-3 p-3 rounded-lg cursor-pointer transition-colors"
                   onClick={() => setIsOpen(true)}
                 >
-                  <div className="flex items-center gap-2">
-                    <Ruler className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">Add Measurements</span>
+                  <div className="flex items-center gap-2 std-btn">
+                    <Ruler className="w-4 h-4 text-white" />
+                    <span className="text-sm text-white">Add Measurements</span>
                   </div>
                 </div>
               )}
@@ -294,7 +296,7 @@ const CustomizeDesignPage = () => {
               {isReadyToPurchase&&
                 <div className="space-y-3">
                   <ActionButton 
-                    variant="secondary"
+                    variant="primary"
                     icon={<ShoppingCart className="w-5 h-5" />}
                     onClick={handleAddToCart}
                     disabled={!isReadyToPurchase}
@@ -302,7 +304,7 @@ const CustomizeDesignPage = () => {
                     Add to Cart
                   </ActionButton>
                   <ActionButton 
-                    variant="primary"
+                    variant="secondary"
                     icon={<ShoppingCart className="w-5 h-5" />}
                     onClick={() => {}}
                     disabled={!isReadyToPurchase}
@@ -316,6 +318,7 @@ const CustomizeDesignPage = () => {
                   >
                     Add to Wishlist
                   </ActionButton>
+                  <br />
                 </div>
               }
             </div>
