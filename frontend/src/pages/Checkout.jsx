@@ -1,68 +1,87 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import { useNavigate, useLocation } from 'react-router-dom';
 import useAuth from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
 
-const Checkout = ({ orderData }) => {
+const Checkout = () => {
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [selectedAddress, setSelectedAddress] = useState('');
   const [couponError, setCouponError] = useState('');
-  const [addresses, setAddresses] = useState([]);
+  const [isMobileView, setIsMobileView] = useState(false);
+  
   const { auth } = useAuth();
   const navigate = useNavigate();
+  
+  const location = useLocation();
+  const orderItems = location.state?.products || [];
 
-  // Sample valid coupons - replace with API call
+  // Responsive check
+  useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth < 1024);
+    };
+    
+    checkMobileView();
+    window.addEventListener('resize', checkMobileView);
+    return () => window.removeEventListener('resize', checkMobileView);
+  }, []);
+
   const validCoupons = {
     'WELCOME10': { discount: 0.1, type: 'percentage' },
     'SAVE20': { discount: 0.2, type: 'percentage' },
     'FLAT50': { discount: 50, type: 'fixed' }
   };
-
+  
   useEffect(() => {
     setAddresses(auth?.address || []);
-    if(!orderData){
-        orderData = auth?.cart;
-    }
-    console.log('orderData', orderData)
   }, [auth]);
 
   const calculateItemTotal = (item) => {
-    return (item.price.fabric + item.price.stitching) * item.quantity;
+    return (item.design.stitching.mrp + item.fabric.meterprice.mrp) * item.quantity;
+  };
+
+  const calculateItemSp = (item) => {
+    return (item.design.stitching.sp + item.fabric.meterprice.sp) * item.quantity;
   };
 
   const calculateSubtotal = () => {
-    return orderData?.items.reduce((sum, item) => sum + calculateItemTotal(item), 0)||0;
-  };
-
-  const calculateDiscount = () => {
-    if (!appliedCoupon) return orderData?.price.discount || 0;
+    return orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
+    };
     
-    const subtotal = calculateSubtotal();
-    if (appliedCoupon.type === 'percentage') {
-      return subtotal * appliedCoupon.discount;
-    }
-    return appliedCoupon.discount;
+  const calculateSp = () => {
+    // Default discount calculation or logic can be added here
+    return orderItems.reduce((sum, item) => sum + calculateItemSp(item), 0);
   };
 
   const calculateShipping = () => {
-    return orderData?.price.delivery || 0;
+    // Default shipping calculation or logic can be added here
+    return ((calculateSubtotal() - calculateDiscount())>1999)?0:99;
+  };
+
+  const calculateDiscount = () => {
+    const sp = calculateSp();
+    const subtotal = calculateSubtotal();
+    let discount = subtotal-sp;
+    if(appliedCoupon){
+      if (appliedCoupon.type === 'percentage') {
+        discount += sp * appliedCoupon.discount;
+      } else {
+        discount += appliedCoupon.discount;
+      }
+    }
+    return discount;
   };
 
   const calculateTotal = () => {
@@ -85,172 +104,152 @@ const Checkout = ({ orderData }) => {
     }
   };
 
-  const handleAddAddress = () => {
-    navigate('/profile/address');
-  };
-
-  const handleValueChange = (value) => {
-    if (value === 'add-address') {
-      handleAddAddress();
-    } else {
-      setSelectedAddress(value);
-    }
-  };
-
-  const handleCheckout = () => {
+  const handleProceedToPayment = () => {
     if (!selectedAddress) {
+      alert('Please select a delivery address');
       return;
     }
-    // Implement payment gateway integration here
-    console.log('Proceeding to payment with:', {
-      items: orderData?.items,
-      address: selectedAddress,
-      totalAmount: calculateTotal(),
-      appliedCoupon
+    navigate('/payment', { 
+      state: { 
+        items: orderItems, 
+        address: selectedAddress,
+        coupon: appliedCoupon,
+        total: calculateTotal()
+      } 
     });
   };
 
-  return (
-    <div className="max-w-3xl mx-auto p-4 space-y-6">
-      <h1 className="text-2xl font-semibold">Checkout</h1>
-      
-      {/* Order Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Order Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {orderData&&orderData.items.map((item) => (
-            <div key={item._id} className="flex justify-between items-center">
-              <div className="flex gap-4">
-                <img
-                  src={item?.design?.images[0]?.url}
-                  alt={item?.design?.name}
-                  className="h-16 w-16 rounded-lg object-cover"
-                />
-                <div>
-                  <h3 className="font-medium">{item?.design?.name}</h3>
-                  <p className="text-sm text-gray-500">Fabric: {item?.fabric?.name}</p>
-                  <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
-                </div>
+  // Rendering order items
+  const renderOrderItems = () => (
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold mb-2">Order Summary</h2>
+      {orderItems.map((item, index) => (
+        <Card key={index}>
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center">
+            <div className="flex-grow mb-2 sm:mb-0">
+              <h3 className="font-medium">{item.design.name}</h3>
+              <div className="text-sm text-gray-500">
+                Fabric: {item.fabric.name}
               </div>
-              <p className="font-medium">₹{calculateItemTotal(item).toFixed(2)}</p>
+              <div className="mt-2">
+                <span>₹{(item.price.fabric + item.price.stitching).toFixed(2)}</span>
+                <span className="ml-2 text-sm text-gray-500">
+                  Qty: {item.quantity}
+                </span>
+              </div>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+            <div className="font-medium self-end sm:self-auto">
+              ₹{calculateItemTotal(item).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 
-      {/* Delivery Address */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Delivery Address</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedAddress} onValueChange={handleValueChange}>
+  // Rendering payment details
+  const renderPaymentDetails = () => (
+    <div className={`${isMobileView ? 'w-full' : 'w-1/4'} border p-4 bg-white h-full rounded-lg`}>
+      {/* Coupon Section */}
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Apply Coupon</h2>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+            placeholder="Enter coupon code"
+            className="flex-grow mb-2 sm:mb-0"
+          />
+          <Button onClick={handleApplyCoupon}>Apply</Button>
+        </div>
+        {couponError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertDescription>{couponError}</AlertDescription>
+          </Alert>
+        )}
+        {appliedCoupon && (
+          <Alert className="mt-2">
+            <AlertDescription>
+              Coupon applied: {appliedCoupon.type === 'percentage' 
+                ? `${appliedCoupon.discount * 100}% off`
+                : `₹${appliedCoupon.discount} off`}
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+      <br />
+
+      {/* Price Breakdown */}
+      <div className="border-t pt-4">
+        <div className="flex justify-between mb-2">
+          <span>Subtotal</span>
+          <span>₹{calculateSubtotal().toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span>Discount</span>
+          <span>-₹{calculateDiscount().toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between mb-2">
+          <span>Shipping</span>
+          <span>₹{calculateShipping().toFixed(2)}</span>
+        </div>
+        {/* {appliedCoupon && (
+          <div className="flex justify-between mb-2 text-green-600">
+            <span>Discount</span>
+            <span>-₹{calculateDiscount().toFixed(2)}</span>
+          </div>
+        )} */}
+        <div className="flex justify-between font-medium text-lg border-t pt-2">
+          <span>Total Payable</span>
+          <span>₹{calculateTotal().toFixed(2)}</span>
+        </div>
+      </div>
+
+      {/* Proceed Button */}
+      <Button 
+        className="w-full mt-4"
+        onClick={handleProceedToPayment}
+        disabled={!selectedAddress}
+      >
+        Proceed to Payment
+      </Button>
+    </div>
+  );
+
+  return (
+    <div className="container mx-auto p-4 flex flex-col-reverse lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6 bg-neutral">
+      {/* Order Summary - Full width on mobile, 3/4 on desktop */}
+      <div className={`${isMobileView ? 'w-full' : 'w-3/4'} space-y-6`}>
+        <h1 className='text-2xl sm:text-4xl font-bold'>Checkout</h1>
+        
+        {/* Address Selection */}
+        <div>
+          <h2 className="text-lg font-semibold mb-2">Select Delivery Address</h2>
+          <Select onValueChange={setSelectedAddress}>
             <SelectTrigger>
-              <SelectValue placeholder="Select delivery address" />
+              <SelectValue placeholder="Choose an address" />
             </SelectTrigger>
             <SelectContent>
               {addresses.map((addr, index) => (
                 <SelectItem key={index} value={addr}>
-                  <div className="text-sm">
+                  <div>
                     <div className="font-medium">{addr.name}</div>
-                    <div className="text-gray-500">{addr.line1}, {addr.city}, {addr.state}</div>
+                    <div className="text-sm text-gray-500">
+                      {addr.line1}, {addr.city}, {addr.state}
+                    </div>
                   </div>
                 </SelectItem>
               ))}
-              <SelectItem value="add-address">
-                <div className="text-sm">
-                  <div className="font-medium">Add an Address</div>
-                </div>
-              </SelectItem>
             </SelectContent>
           </Select>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Coupon */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Apply Coupon</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <Input
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value)}
-              placeholder="Enter coupon code"
-              className="flex-grow"
-            />
-            <Button onClick={handleApplyCoupon}>Apply</Button>
-          </div>
-          {couponError && (
-            <Alert variant="destructive" className="mt-2">
-              <AlertDescription>{couponError}</AlertDescription>
-            </Alert>
-          )}
-          {appliedCoupon && (
-            <Alert className="mt-2">
-              <AlertDescription className="flex justify-between items-center">
-                <span>
-                  Coupon applied: {appliedCoupon.type === 'percentage' 
-                    ? `${appliedCoupon.discount * 100}% off`
-                    : `₹${appliedCoupon.discount} off`}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setAppliedCoupon(null)}
-                >
-                  Remove
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
+        {/* Order Items */}
+        {renderOrderItems()}
+      </div>
 
-      {/* Price Breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Price Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>₹{calculateSubtotal().toFixed(2)}</span>
-            </div>
-            {orderData&&(appliedCoupon || orderData.price.discount > 0) && (
-              <div className="flex justify-between text-green-600">
-                <span>Discount</span>
-                <span>-₹{calculateDiscount().toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-gray-500">
-              <span>Shipping</span>
-              <span>₹{calculateShipping().toFixed(2)}</span>
-            </div>
-            <Separator className="my-2" />
-            <div className="flex justify-between font-medium text-lg">
-              <span>Total</span>
-              <span>₹{calculateTotal().toFixed(2)}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Proceed to Payment Button */}
-      <Button 
-        className="w-full"
-        size="lg"
-        disabled={!selectedAddress}
-        onClick={handleCheckout}
-      >
-        {!selectedAddress 
-          ? "Please Select Address" 
-          : `Proceed to Pay ₹${calculateTotal().toFixed(2)}`}
-      </Button>
+      {/* Payment Section */}
+      {renderPaymentDetails()}
     </div>
   );
 };
