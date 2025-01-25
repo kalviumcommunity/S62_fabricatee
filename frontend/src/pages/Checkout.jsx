@@ -12,6 +12,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate, useLocation } from 'react-router-dom';
 import useAuth from '@/hooks/useAuth';
+import DynamicForm from '@/components/DynamicForm';
+import Modal from '@/components/Modal';
 
 const Checkout = () => {
   const [addresses, setAddresses] = useState([]);
@@ -26,6 +28,9 @@ const Checkout = () => {
   
   const location = useLocation();
   const orderItems = location.state?.products || [];
+
+  const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
+  const [addressError, setAddressError] = useState('');
 
   // Responsive check
   useEffect(() => {
@@ -43,6 +48,40 @@ const Checkout = () => {
     'SAVE20': { discount: 0.2, type: 'percentage' },
     'FLAT50': { discount: 50, type: 'fixed' }
   };
+
+  const formFields = [
+    {
+      name: 'name',
+      label: 'Name',
+      type: 'text',
+      placeholder: 'Address name'
+    },
+    {
+      name: 'city',
+      label: 'City',
+      type: 'text',
+      placeholder: 'Enter City Name'
+    },
+    {
+      name: 'line1',
+      label: 'Address',
+      type: 'text',
+      placeholder: 'Enter Address',
+      fullWidth: true
+    },
+    {
+      name: 'state',
+      label: 'State',
+      type: 'text',
+      placeholder: 'Enter State Name'
+    },
+    {
+      name: 'pincode',
+      label: 'Pincode',
+      type: 'number',
+      placeholder: 'Enter PIN'
+    }
+  ];
   
   useEffect(() => {
     setAddresses(auth?.address || []);
@@ -104,6 +143,12 @@ const Checkout = () => {
     }
   };
 
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+  };
+
   const handleProceedToPayment = () => {
     if (!selectedAddress) {
       alert('Please select a delivery address');
@@ -151,32 +196,37 @@ const Checkout = () => {
   const renderPaymentDetails = () => (
     <div className={`${isMobileView ? 'w-full' : 'w-1/4'} border p-4 bg-white h-full rounded-lg`}>
       {/* Coupon Section */}
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Apply Coupon</h2>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Input
-            value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
-            placeholder="Enter coupon code"
-            className="flex-grow mb-2 sm:mb-0"
-          />
-          <Button onClick={handleApplyCoupon}>Apply</Button>
+      <div className="space-y-2">
+          <label className="text-sm font-medium">Coupon Code</label>
+          {!appliedCoupon&&<div className="flex gap-2">
+            <Input
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
+              placeholder="Enter coupon code"
+              className="flex-grow"
+            />
+            <Button onClick={handleApplyCoupon}>Apply</Button>
+          </div>}
+          {couponError && (
+            <Alert variant="destructive">
+              <AlertDescription>{couponError}</AlertDescription>
+            </Alert>
+          )}
+          {appliedCoupon && (
+            <Alert>
+              <AlertDescription className="flex justify-between items-center">
+                <span>
+                  Coupon applied: {appliedCoupon.type === 'percentage' 
+                    ? `${appliedCoupon.discount * 100}% off`
+                    : `₹${appliedCoupon.discount} off`}
+                </span>
+                <Button variant="outline" size="sm" onClick={removeCoupon}>
+                  Remove
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
-        {couponError && (
-          <Alert variant="destructive" className="mt-2">
-            <AlertDescription>{couponError}</AlertDescription>
-          </Alert>
-        )}
-        {appliedCoupon && (
-          <Alert className="mt-2">
-            <AlertDescription>
-              Coupon applied: {appliedCoupon.type === 'percentage' 
-                ? `${appliedCoupon.discount * 100}% off`
-                : `₹${appliedCoupon.discount} off`}
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
       <br />
 
       {/* Price Breakdown */}
@@ -216,6 +266,36 @@ const Checkout = () => {
     </div>
   );
 
+  const handleAddressChange = (value) => {
+    if (value === 'add_new') {
+      setSelectedAddress(addresses[0]);
+      setIsAddAddressModalOpen(true);
+    } else {
+      setSelectedAddress(value);
+    }
+  };
+  
+  const handleAddressSubmit = (newAddress) => {
+    // Validate address
+    if (!newAddress.name || !newAddress.line1 || !newAddress.city || !newAddress.state) {
+      setAddressError('Please fill in all required fields');
+      return;
+    }
+  
+    // Add new address to user's addresses
+    const updatedAddresses = [...addresses, newAddress];
+    setAddresses(updatedAddresses);
+    
+    // Update auth context (assuming you have a method to update addresses)
+    // auth.updateAddresses(updatedAddresses);
+  
+    // Select the newly added address
+    setSelectedAddress(newAddress);
+    
+    // Close the modal
+    setIsAddAddressModalOpen(false);
+  };
+
   return (
     <div className="container mx-auto p-4 flex flex-col-reverse lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6 bg-neutral">
       {/* Order Summary - Full width on mobile, 3/4 on desktop */}
@@ -225,7 +305,7 @@ const Checkout = () => {
         {/* Address Selection */}
         <div>
           <h2 className="text-lg font-semibold mb-2">Select Delivery Address</h2>
-          <Select onValueChange={setSelectedAddress}>
+          <Select onValueChange={handleAddressChange}>
             <SelectTrigger>
               <SelectValue placeholder="Choose an address" />
             </SelectTrigger>
@@ -240,9 +320,24 @@ const Checkout = () => {
                   </div>
                 </SelectItem>
               ))}
+              <SelectItem value="add_new" className="text-blue-600 font-semibold">
+                + Add New Address
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {isAddAddressModalOpen && (
+          <Modal setIsOpen={setIsAddAddressModalOpen}>
+            <DynamicForm
+              title="Add Address"
+              fields={formFields}
+              onSubmit={handleAddressSubmit}
+              error={addressError}
+              onClose={() => setIsAddAddressModalOpen(false)}
+            />
+          </Modal>
+          )}
 
         {/* Order Items */}
         {renderOrderItems()}
