@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import useAuth from '@/hooks/useAuth';
 import axios from '@/api/axios';
 import { useNavigate } from 'react-router-dom';
+import CartProductCard from './CartProductCard';
 
 const ShoppingCart = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -162,55 +163,7 @@ const ShoppingCart = () => {
 
           <div className="flex-grow overflow-y-auto py-4">
             {cart.map(item => (
-              <Card key={item._id} className="mb-4">
-                <CardContent className="p-4">
-                  <div className="flex gap-4">
-                    <div className="flex items-start">
-                      <Checkbox 
-                        checked={selectedItems.has(item._id)}
-                        onCheckedChange={() => toggleItemSelection(item._id)}
-                      />
-                    </div>
-                    <img
-                      src={item?.design?.images[0]?.url}
-                      alt={item?.design?.name}
-                      className="h-24 w-24 rounded-lg object-cover"
-                    />
-                    <div className="flex-grow">
-                      <div className="flex justify-between">
-                        <h3 className="font-medium">{item?.design?.name}</h3>
-                        <button
-                          onClick={() => removeItem(item._id)}
-                          className="text-gray-400 hover:text-gray-600"
-                        >
-                          <X className="h-5 w-5" />
-                        </button>
-                      </div>
-                      <div className="text-sm text-gray-500 mt-1">
-                        Fabric: {item?.fabric?.name}
-                      </div>
-                      <div className="text-sm font-medium mt-1">
-                        ₹{(item.price.fabric + item.price.stitching).toFixed(2)}
-                      </div>
-                      <div className="flex items-center mt-2">
-                        <button
-                          onClick={() => updateQuantity(item._id, -1)}
-                          className="p-1 rounded-md hover:bg-gray-100"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="mx-3">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item._id, 1)}
-                          className="p-1 rounded-md hover:bg-gray-100"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <CartProductCard key={item._id} id={item._id} name={item?.design?.name} fabric={item?.fabric?.name} total={(item.price.fabric + item.price.stitching)} imgurl={item?.design?.images[0]?.url} quantity={item.quantity} selectedItems={selectedItems} toggleItemSelection={toggleItemSelection} removeItem={removeItem} updateQuantity={updateQuantity} />
             ))}
           </div>
 

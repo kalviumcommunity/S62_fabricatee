@@ -14,47 +14,41 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useAuth from '@/hooks/useAuth';
 import DynamicForm from '@/components/DynamicForm';
 import Modal from '@/components/Modal';
+import axios from '@/api/axios';
+import CartProductCard from '@/components/CartProductCard';
 
 const Checkout = () => {
+  // State management
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
   const [isMobileView, setIsMobileView] = useState(false);
-  
-  const { auth } = useAuth();
-  const navigate = useNavigate();
-  
-  const location = useLocation();
-  const orderItems = location.state?.products || [];
-
   const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
   const [addressError, setAddressError] = useState('');
 
-  // Responsive check
-  useEffect(() => {
-    const checkMobileView = () => {
-      setIsMobileView(window.innerWidth < 1024);
-    };
-    
-    checkMobileView();
-    window.addEventListener('resize', checkMobileView);
-    return () => window.removeEventListener('resize', checkMobileView);
-  }, []);
+  // Hooks
+  const { auth, setAuth } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const orderItems = location.state?.products || [];
 
+  // Valid coupon configurations
   const validCoupons = {
     'WELCOME10': { discount: 0.1, type: 'percentage' },
     'SAVE20': { discount: 0.2, type: 'percentage' },
     'FLAT50': { discount: 50, type: 'fixed' }
   };
 
+  // Form fields configuration for address
   const formFields = [
     {
       name: 'name',
       label: 'Name',
       type: 'text',
-      placeholder: 'Address name'
+      placeholder: 'Address name',
+      default: `Address${addresses.length + 1}`
     },
     {
       name: 'city',
@@ -82,11 +76,23 @@ const Checkout = () => {
       placeholder: 'Enter PIN'
     }
   ];
-  
+
+  // Effects
+  useEffect(() => {
+    const checkMobileView = () => {
+      setIsMobileView(window.innerWidth < 1024);
+    };
+    
+    checkMobileView();
+    window.addEventListener('resize', checkMobileView);
+    return () => window.removeEventListener('resize', checkMobileView);
+  }, []);
+
   useEffect(() => {
     setAddresses(auth?.address || []);
   }, [auth]);
 
+  // Price calculation methods
   const calculateItemTotal = (item) => {
     return (item.design.stitching.mrp + item.fabric.meterprice.mrp) * item.quantity;
   };
@@ -97,23 +103,22 @@ const Checkout = () => {
 
   const calculateSubtotal = () => {
     return orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
-    };
-    
+  };
+
   const calculateSp = () => {
-    // Default discount calculation or logic can be added here
     return orderItems.reduce((sum, item) => sum + calculateItemSp(item), 0);
   };
 
   const calculateShipping = () => {
-    // Default shipping calculation or logic can be added here
-    return ((calculateSubtotal() - calculateDiscount())>1999)?0:99;
+    return (calculateSubtotal() - calculateDiscount() > 1999) ? 0 : 99;
   };
 
   const calculateDiscount = () => {
     const sp = calculateSp();
     const subtotal = calculateSubtotal();
-    let discount = subtotal-sp;
-    if(appliedCoupon){
+    let discount = subtotal - sp;
+
+    if (appliedCoupon) {
       if (appliedCoupon.type === 'percentage') {
         discount += sp * appliedCoupon.discount;
       } else {
@@ -127,6 +132,7 @@ const Checkout = () => {
     return calculateSubtotal() - calculateDiscount() + calculateShipping();
   };
 
+  // Handler methods
   const handleApplyCoupon = () => {
     setCouponError('');
     if (!couponCode) {
@@ -164,41 +170,49 @@ const Checkout = () => {
     });
   };
 
-  // Rendering order items
-  const renderOrderItems = () => (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold mb-2">Order Summary</h2>
-      {orderItems.map((item, index) => (
-        <Card key={index}>
-          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center">
-            <div className="flex-grow mb-2 sm:mb-0">
-              <h3 className="font-medium">{item.design.name}</h3>
-              <div className="text-sm text-gray-500">
-                Fabric: {item.fabric.name}
-              </div>
-              <div className="mt-2">
-                <span>₹{(item.price.fabric + item.price.stitching).toFixed(2)}</span>
-                <span className="ml-2 text-sm text-gray-500">
-                  Qty: {item.quantity}
-                </span>
-              </div>
-            </div>
-            <div className="font-medium self-end sm:self-auto">
-              ₹{calculateItemTotal(item).toFixed(2)}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+  const handleAddressChange = (value) => {
+    if (value === 'add_new') {
+      setSelectedAddress(addresses[0]);
+      setIsAddAddressModalOpen(true);
+    } else {
+      setSelectedAddress(value);
+    }
+  };
 
-  // Rendering payment details
+  const handleAddressSubmit = async (newAddress) => {
+    if (!newAddress.name || !newAddress.line1 || !newAddress.city || !newAddress.state) {
+      setAddressError('Please fill in all required fields');
+      return;
+    }
+
+    for (let add of addresses) {
+      if (add.name === newAddress.name) {
+        setAddressError(`Address ${newAddress.name} already exists, enter a unique name`);
+        return;
+      }
+    }
+
+    const updatedAddresses = [...addresses, newAddress];
+    
+    try {
+      await axios.put(`/api/user/${auth.userId}`, { address: updatedAddresses });
+      setAddresses(updatedAddresses);
+      setAuth((prev) => ({ ...prev, address: updatedAddresses }));
+      setSelectedAddress(newAddress);
+      setIsAddAddressModalOpen(false);
+    } catch (err) {
+      setAddressError("Error in updating Address");
+      console.error("Error in updating address:", err.message);
+    }
+  };
+
+  // Render methods
   const renderPaymentDetails = () => (
-    <div className={`${isMobileView ? 'w-full' : 'w-1/4'} border p-4 bg-white h-full rounded-lg`}>
-      {/* Coupon Section */}
+    <div className={`${isMobileView ? 'w-full' : 'w-1/4 !mt-4'} border shadow-md p-4 bg-white h-full rounded-lg`}>
       <div className="space-y-2">
-          <label className="text-sm font-medium">Coupon Code</label>
-          {!appliedCoupon&&<div className="flex gap-2">
+        <label className="text-sm font-medium">Coupon Code</label>
+        {!appliedCoupon && (
+          <div className="flex gap-2">
             <Input
               value={couponCode}
               onChange={(e) => setCouponCode(e.target.value)}
@@ -206,31 +220,32 @@ const Checkout = () => {
               className="flex-grow"
             />
             <Button onClick={handleApplyCoupon}>Apply</Button>
-          </div>}
-          {couponError && (
-            <Alert variant="destructive">
-              <AlertDescription>{couponError}</AlertDescription>
-            </Alert>
-          )}
-          {appliedCoupon && (
-            <Alert>
-              <AlertDescription className="flex justify-between items-center">
-                <span>
-                  Coupon applied: {appliedCoupon.type === 'percentage' 
-                    ? `${appliedCoupon.discount * 100}% off`
-                    : `₹${appliedCoupon.discount} off`}
-                </span>
-                <Button variant="outline" size="sm" onClick={removeCoupon}>
-                  Remove
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      <br />
+          </div>
+        )}
+        
+        {couponError && (
+          <Alert variant="destructive">
+            <AlertDescription>{couponError}</AlertDescription>
+          </Alert>
+        )}
 
-      {/* Price Breakdown */}
-      <div className="border-t pt-4">
+        {appliedCoupon && (
+          <Alert>
+            <AlertDescription className="flex justify-between items-center">
+              <span>
+                Coupon applied: {appliedCoupon.type === 'percentage' 
+                  ? `${appliedCoupon.discount * 100}% off`
+                  : `₹${appliedCoupon.discount} off`}
+              </span>
+              <Button variant="outline" size="sm" onClick={removeCoupon}>
+                Remove
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      <div className="border-t pt-4 mt-4">
         <div className="flex justify-between mb-2">
           <span>Subtotal</span>
           <span>₹{calculateSubtotal().toFixed(2)}</span>
@@ -243,19 +258,12 @@ const Checkout = () => {
           <span>Shipping</span>
           <span>₹{calculateShipping().toFixed(2)}</span>
         </div>
-        {/* {appliedCoupon && (
-          <div className="flex justify-between mb-2 text-green-600">
-            <span>Discount</span>
-            <span>-₹{calculateDiscount().toFixed(2)}</span>
-          </div>
-        )} */}
         <div className="flex justify-between font-medium text-lg border-t pt-2">
           <span>Total Payable</span>
           <span>₹{calculateTotal().toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Proceed Button */}
       <Button 
         className="w-full mt-4"
         onClick={handleProceedToPayment}
@@ -266,55 +274,23 @@ const Checkout = () => {
     </div>
   );
 
-  const handleAddressChange = (value) => {
-    if (value === 'add_new') {
-      setSelectedAddress(addresses[0]);
-      setIsAddAddressModalOpen(true);
-    } else {
-      setSelectedAddress(value);
-    }
-  };
-  
-  const handleAddressSubmit = (newAddress) => {
-    // Validate address
-    if (!newAddress.name || !newAddress.line1 || !newAddress.city || !newAddress.state) {
-      setAddressError('Please fill in all required fields');
-      return;
-    }
-  
-    // Add new address to user's addresses
-    const updatedAddresses = [...addresses, newAddress];
-    setAddresses(updatedAddresses);
-    
-    // Update auth context (assuming you have a method to update addresses)
-    // auth.updateAddresses(updatedAddresses);
-  
-    // Select the newly added address
-    setSelectedAddress(newAddress);
-    
-    // Close the modal
-    setIsAddAddressModalOpen(false);
-  };
-
   return (
     <div className="container mx-auto p-4 flex flex-col-reverse lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6 bg-neutral">
-      {/* Order Summary - Full width on mobile, 3/4 on desktop */}
-      <div className={`${isMobileView ? 'w-full' : 'w-3/4'} space-y-6`}>
-        <h1 className='text-2xl sm:text-4xl font-bold'>Checkout</h1>
+      <div className={`${isMobileView ? 'w-full' : 'w-3/4 p-6'} space-y-6`}>
+        <h1 className="text-2xl sm:text-4xl font-bold">Checkout</h1>
         
-        {/* Address Selection */}
         <div>
           <h2 className="text-lg font-semibold mb-2">Select Delivery Address</h2>
-          <Select onValueChange={handleAddressChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choose an address" />
+          <Select onValueChange={handleAddressChange} className='p-4'>
+            <SelectTrigger className="w-full text-left p-6">
+              <SelectValue placeholder="Choose an address" className="truncate text-left" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-w-[calc(100vw-2rem)] sm:max-w-[400px]">
               {addresses.map((addr, index) => (
-                <SelectItem key={index} value={addr}>
-                  <div>
-                    <div className="font-medium">{addr.name}</div>
-                    <div className="text-sm text-gray-500">
+                <SelectItem key={index} value={addr} className="w-full">
+                  <div className="w-full">
+                    <div className="font-medium truncate">{addr.name}</div>
+                    <div className="text-sm text-gray-500 break-words whitespace-normal">
                       {addr.line1}, {addr.city}, {addr.state}
                     </div>
                   </div>
@@ -337,13 +313,24 @@ const Checkout = () => {
               onClose={() => setIsAddAddressModalOpen(false)}
             />
           </Modal>
-          )}
+        )}
 
-        {/* Order Items */}
-        {renderOrderItems()}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold mb-2">Order Summary</h2>
+          {orderItems.map((item, index) => (
+            <CartProductCard 
+              key={index}
+              id={item._id}
+              name={item?.design?.name}
+              fabric={item?.fabric?.name}
+              total={(item.price.fabric + item.price.stitching)}
+              imgurl={item?.design?.images[0]?.url}
+              quantity={item.quantity}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Payment Section */}
       {renderPaymentDetails()}
     </div>
   );
