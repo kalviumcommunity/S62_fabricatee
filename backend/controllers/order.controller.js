@@ -1,5 +1,68 @@
 import mongoose from "mongoose";
 import Order from "../models/orders.model.js";
+import crypto from 'crypto';
+import Razorpay from "razorpay";
+
+export const createOrder = async (req, res) =>{
+    try{
+        const instance = new Razorpay({
+            key_id: process.env.RZYPAY_ID,
+            key_secret: process.env.RZYPAY_SECRET
+        })
+
+        const options = {
+            amount: req.body.amount * 100,
+            currency: 'INR',
+            receipt: crypto.randomBytes(10).toString("hex")
+        }
+
+        instance.orders.create(options, (err, order)=>{
+            if(err){
+                console.log(err);
+                return res.status(500).json({message: "Something Went Wrong"});
+            }
+            return res.status(200).json({data: order});
+        })
+    }catch(err){
+        console.log(err);
+        res.status(500).json({message: "Internal Server Error"});
+    }
+}
+
+export const verifyPayment = async (req, res)=>{
+    console.log(req.body);
+    try {
+        const {order_id, payment_id, payment_signature} = req.body;
+        const sign = order_id + "|" + payment_id;
+        const expectedSign = crypto
+            .createHmac("sha256", process.env.RZYPAY_SECRET)
+            .update(sign.toString())
+            .digest("hex");
+
+            
+        if(payment_signature === expectedSign){
+            const body = req.body;
+    
+            const order = new Order({
+                userId: body.userId,
+                
+            });
+            order.save();
+            res.status(201).json({
+                success: true,
+                message: body,
+            })
+            console.log("Order Created");
+            return res.status(200).json({message: "Payment verification successfull", success: true});
+        }else{
+            return res.status(400).json({message: "Invalid signature sent", success: false})
+        }
+        
+    } catch (error) {
+        console.log(err);
+        res.status(500).json({message: "Internal Server Error"});
+    }
+}
 
 export const getAllOrders = async (req, res) =>{
     try{
