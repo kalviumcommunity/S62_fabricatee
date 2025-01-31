@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
@@ -24,15 +24,22 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
-  const [isMobileView, setIsMobileView] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 1024);
   const [isAddAddressModalOpen, setIsAddAddressModalOpen] = useState(false);
   const [addressError, setAddressError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Hooks
   const { auth, setAuth } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const orderItems = location.state?.products || [];
+
+  useEffect(() => {
+    if (!orderItems.length) {
+      navigate('/');
+    }
+  }, []);
 
   // Valid coupon configurations
   const validCoupons = {
@@ -48,94 +55,120 @@ const Checkout = () => {
       label: 'Name',
       type: 'text',
       placeholder: 'Address name',
-      default: `Address${addresses.length + 1}`
+      default: `Address${addresses.length + 1}`,
+      required: true
     },
     {
       name: 'city',
       label: 'City',
       type: 'text',
-      placeholder: 'Enter City Name'
+      placeholder: 'Enter City Name',
+      required: true
     },
     {
       name: 'line1',
       label: 'Address',
       type: 'text',
       placeholder: 'Enter Address',
-      fullWidth: true
+      fullWidth: true,
+      required: true
     },
     {
       name: 'state',
       label: 'State',
       type: 'text',
-      placeholder: 'Enter State Name'
+      placeholder: 'Enter State Name',
+      required: true
     },
     {
       name: 'pincode',
       label: 'Pincode',
       type: 'number',
-      placeholder: 'Enter PIN'
+      placeholder: 'Enter PIN',
+      required: true,
+      minLength: 6,
+      maxLength: 6
     }
   ];
 
-  // Effects
-  useEffect(() => {
-    const checkMobileView = () => {
-      setIsMobileView(window.innerWidth < 1024);
-    };
-    
-    checkMobileView();
-    window.addEventListener('resize', checkMobileView);
-    return () => window.removeEventListener('resize', checkMobileView);
-  }, []);
-
-  useEffect(() => {
-    setAddresses(auth?.address || []);
-  }, [auth]);
-
-  // Price calculation methods
+  // Helper functions
   const calculateItemTotal = (item) => {
-    return (item.design.stitching.mrp + item.fabric.meterprice.mrp) * item.quantity;
+    return item?.design?.stitching?.mrp && item?.fabric?.meterprice?.mrp
+      ? (item.design.stitching.mrp + item.fabric.meterprice.mrp) * (item.quantity || 1)
+      : 0;
   };
 
   const calculateItemSp = (item) => {
-    return (item.design.stitching.sp + item.fabric.meterprice.sp) * item.quantity;
+    return item?.design?.stitching?.sp && item?.fabric?.meterprice?.sp
+      ? (item.design.stitching.sp + item.fabric.meterprice.sp) * (item.quantity || 1)
+      : 0;
   };
 
-  const calculateSubtotal = () => {
-    return orderItems.reduce((sum, item) => sum + calculateItemTotal(item), 0);
-  };
+  // Effects
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 1024);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  const calculateSp = () => {
-    return orderItems.reduce((sum, item) => sum + calculateItemSp(item), 0);
-  };
-
-  const calculateShipping = () => {
-    return (calculateSubtotal() - calculateDiscount() > 1999) ? 0 : 99;
-  };
-
-  const calculateDiscount = () => {
-    const sp = calculateSp();
-    const subtotal = calculateSubtotal();
-    let discount = subtotal - sp;
-
-    if (appliedCoupon) {
-      if (appliedCoupon.type === 'percentage') {
-        discount += sp * appliedCoupon.discount;
-      } else {
-        discount += appliedCoupon.discount;
+  useEffect(() => {
+    if (auth?.address) {
+      setAddresses(auth.address);
+      // Set the first address as default if available
+      if (auth.address.length > 0 && !selectedAddress) {
+        setSelectedAddress(auth.address[0]);
       }
     }
-    return discount;
-  };
+  }, [auth]);
 
-  const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscount() + calculateShipping();
-  };
+  // Memoized calculations
+  const itemTotals = useMemo(() => {
+    return orderItems.map(item => ({
+      total: calculateItemTotal(item),
+      sp: calculateItemSp(item)
+    }));
+  }, [orderItems]);
+
+  const subtotal = useMemo(() => {
+    return itemTotals.reduce((sum, item) => sum + item.total, 0);
+  }, [itemTotals]);
+
+  const spTotal = useMemo(() => {
+    return itemTotals.reduce((sum, item) => sum + item.sp, 0);
+  }, [itemTotals]);
+
+  const discount = useMemo(() => {
+    return subtotal - spTotal;
+  }, [subtotal, spTotal]);
+
+  const shipping = useMemo(() => {
+    const effectiveTotal = subtotal - discount;
+    return effectiveTotal > 1999 ? 0 : 99;
+  }, [subtotal, discount]);
+
+  const couponDiscount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    
+    const discountAmount = appliedCoupon.type === 'percentage' 
+      ? spTotal * appliedCoupon.discount
+      : appliedCoupon.discount;
+    
+    // Ensure discount doesn't exceed the total
+    return Math.min(discountAmount, spTotal);
+  }, [appliedCoupon, spTotal]);
+
+  const total = useMemo(() => {
+    return Math.max(0, subtotal - discount - couponDiscount + shipping);
+  }, [subtotal, discount, couponDiscount, shipping]);
+
 
   // Handler methods
   const handleApplyCoupon = () => {
     setCouponError('');
-    if (!couponCode) {
+    if (!couponCode.trim()) {
       setCouponError('Please enter a coupon code');
       return;
     }
@@ -155,24 +188,189 @@ const Checkout = () => {
     setCouponError('');
   };
 
-  const handleProceedToPayment = () => {
+  const initPayment = async (data) => {
+    try {
+      // Check for Razorpay SDK
+      if (!window.Razorpay) {
+        throw new Error('Razorpay SDK not loaded');
+      }
+  
+      const options = {
+        key: "rzp_test_FfU53usmrjk8i6",
+        name: "Fabricatee",
+        amount: data.amount,
+        currency: data.currency,
+        prefill: {
+          contact: auth?.phoneNumber || undefined,
+        },
+        image: "https://res.cloudinary.com/dabeupfqq/image/upload/v1737023775/uploads/onf1pzup6aa4xrybtdag.png",
+        description: "Your Style, Our Craft!",
+        order_id: data.id,
+        
+        // Handle payment success
+        handler: async (res) => {
+          try {
+            console.log('Payment handler called');
+            
+            // Filter out ordered items from cart
+            const updatedCart = auth?.cart?.filter(
+              (cartItem) => !orderItems.some((item) => item._id === cartItem._id.toString())
+            );
+  
+            // Verify payment with backend
+            const { data: verificationData } = await axios.post('/api/order/verify', {
+              userId: auth?._id,
+              updatedCart,
+              razorpay_order_id: res.razorpay_order_id,
+              razorpay_payment_id: res.razorpay_payment_id,
+              razorpay_signature: res.razorpay_signature
+            });
+  
+            console.log('Payment verified');
+            
+            // Update local state
+            const currentDate = new Date().toLocaleDateString('en-GB');
+            const updatedOrders = [...(auth?.orders || []), verificationData.id];
+            
+            setAuth(prev => ({
+              ...prev,
+              orders: updatedOrders,
+              cart: updatedCart
+            }));
+  
+            // Prepare receipt data
+            const receiptBody = {
+              userId: auth?._id,
+              items: orderItems,
+              price: {
+                totalmrp: subtotal,
+                discount,
+                coupondiscount: {
+                  amt: couponDiscount,
+                  coupon: appliedCoupon ? couponCode : null
+                },
+                delivery: shipping,
+                total,
+              },
+              createdAt: currentDate,
+              orderId: res.razorpay_order_id
+            };
+  
+            // Navigate based on verification result
+            navigate(verificationData.success ? './confirmed' : './failed', { state: receiptBody });
+  
+          } catch (error) {
+            console.error('Payment verification failed:', error);
+            handlePaymentError('verification', error);
+          }
+        },
+  
+        // Handle modal closing
+        modal: {
+          ondismiss: () => {
+            console.log('Payment modal closed');
+            handlePaymentError('modal_close', data.id);
+          }
+        },
+  
+        // Handle payment failure
+        on: {
+          payment_failed: (response) => {
+            console.error('Payment failed:', response);
+            handlePaymentError('payment', response);
+          }
+        },
+  
+        theme: {
+          color: "#3399cc"
+        }
+      };
+  
+      // Initialize and open Razorpay
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+  
+    } catch (error) {
+      console.error('Payment initialization failed:', error);
+      handlePaymentError('initialization', error);
+    }
+  };
+  
+  // Centralized error handler
+  const handlePaymentError = (type, orderId, error = null) => {
+    let errorMessage = 'Payment failed. Please try again.';
+
+    
+    
+    switch (type) {
+      case 'initialization':
+        errorMessage = 'Unable to initialize payment. Please refresh and try again.';
+        break;
+      case 'verification':
+        errorMessage = 'Payment verification failed. Please contact support.';
+        break;
+      case 'payment':
+        errorMessage = `Payment failed: ${error?.error?.description || 'Unknown error'}`;
+        break;
+      case 'modal_close':
+        errorMessage = 'Payment cancelled by user.';
+        break;
+    }
+  
+    // You can add toast/notification here
+    console.error(errorMessage);
+    
+    // Navigate to failure page with error details
+    navigate('./failed', { 
+      state: { 
+        error: errorMessage,
+        errorType: type,
+        timestamp: new Date().toISOString()
+      }
+    });
+  };
+
+  
+  const handleProceedToPayment = async () => {
     if (!selectedAddress) {
       alert('Please select a delivery address');
       return;
     }
-    navigate('/payment', { 
-      state: { 
-        items: orderItems, 
-        address: selectedAddress,
-        coupon: appliedCoupon,
-        total: calculateTotal()
-      } 
-    });
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post("/api/order/create", {
+        userId: auth?._id,
+        items: orderItems,
+        price: {
+          totalmrp: subtotal,
+          discount,
+          coupondiscount: {
+            amt: couponDiscount,
+            coupon: appliedCoupon ? couponCode : null
+          },
+          delivery: shipping,
+          total,
+        }
+      });
+
+      if (!response.data?.success) {
+        throw new Error('Order creation failed');
+      }
+
+      console.log('initializing payment');
+      await initPayment(response.data.data);
+    } catch (error) {
+      console.error('Payment initialization failed:', error);
+      navigate('/error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAddressChange = (value) => {
+    setAddressError('');
     if (value === 'add_new') {
-      setSelectedAddress(addresses[0]);
       setIsAddAddressModalOpen(true);
     } else {
       setSelectedAddress(value);
@@ -180,16 +378,25 @@ const Checkout = () => {
   };
 
   const handleAddressSubmit = async (newAddress) => {
-    if (!newAddress.name || !newAddress.line1 || !newAddress.city || !newAddress.state) {
-      setAddressError('Please fill in all required fields');
+    setAddressError('');
+    
+    // Validation
+    const requiredFields = ['name', 'line1', 'city', 'state', 'pincode'];
+    const missingFields = requiredFields.filter(field => !newAddress[field]);
+    
+    if (missingFields.length) {
+      setAddressError(`Please fill in: ${missingFields.join(', ')}`);
       return;
     }
 
-    for (let add of addresses) {
-      if (add.name === newAddress.name) {
-        setAddressError(`Address ${newAddress.name} already exists, enter a unique name`);
-        return;
-      }
+    if (addresses.some(addr => addr.name === newAddress.name)) {
+      setAddressError(`Address ${newAddress.name} already exists, enter a unique name`);
+      return;
+    }
+
+    if (newAddress.pincode.length !== 6) {
+      setAddressError('Pincode must be 6 digits');
+      return;
     }
 
     const updatedAddresses = [...addresses, newAddress];
@@ -197,12 +404,12 @@ const Checkout = () => {
     try {
       await axios.put(`/api/user/${auth.userId}`, { address: updatedAddresses });
       setAddresses(updatedAddresses);
-      setAuth((prev) => ({ ...prev, address: updatedAddresses }));
+      setAuth(prev => ({ ...prev, address: updatedAddresses }));
       setSelectedAddress(newAddress);
       setIsAddAddressModalOpen(false);
     } catch (err) {
-      setAddressError("Error in updating Address");
-      console.error("Error in updating address:", err.message);
+      console.error("Error updating address:", err);
+      setAddressError("Failed to update address. Please try again.");
     }
   };
 
@@ -248,34 +455,40 @@ const Checkout = () => {
       <div className="border-t pt-4 mt-4">
         <div className="flex justify-between mb-2">
           <span>Subtotal</span>
-          <span>₹{calculateSubtotal().toFixed(2)}</span>
+          <span>₹{subtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between mb-2">
-          <span>Discount</span>
-          <span>-₹{calculateDiscount().toFixed(2)}</span>
+          <span>Offer Discount</span>
+          <span>-₹{discount.toFixed(2)}</span>
         </div>
+        {appliedCoupon && (
+          <div className="flex justify-between mb-2">
+            <span>Coupon Discount</span>
+            <span>-₹{couponDiscount.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between mb-2">
           <span>Shipping</span>
-          <span>₹{calculateShipping().toFixed(2)}</span>
+          <span>₹{shipping.toFixed(2)}</span>
         </div>
         <div className="flex justify-between font-medium text-lg border-t pt-2">
           <span>Total Payable</span>
-          <span>₹{calculateTotal().toFixed(2)}</span>
+          <span>₹{total.toFixed(2)}</span>
         </div>
       </div>
 
       <Button 
         className="w-full mt-4"
         onClick={handleProceedToPayment}
-        disabled={!selectedAddress}
+        disabled={!selectedAddress || isLoading}
       >
-        Proceed to Payment
+        {isLoading ? 'Processing...' : 'Proceed to Payment'}
       </Button>
     </div>
   );
 
   return (
-    <div className="container mx-auto p-4 flex flex-col-reverse lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6 bg-neutral">
+    <div className="max-w-[100vw] min-h-[100vh] mx-0 p-6 flex flex-col-reverse lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6 bg-neutral">
       <div className={`${isMobileView ? 'w-full' : 'w-3/4 p-6'} space-y-6`}>
         <h1 className="text-2xl sm:text-4xl font-bold">Checkout</h1>
         
