@@ -14,7 +14,8 @@ import DesignForm from './components/DesignForm'
 import FabricForm from './components/FabricForm'
 import ProfileComp from './pages/ProfileComp'
 import FabricPage from './pages/FabricPage'
-import CustomizeDesignPage from './pages/CustomizeDesignPage.jsx'
+import CustomizeDesignPage from './pages/CustomizeDesignPage'
+import Checkout from './pages/Checkout'
 
 function App() {
   return (
@@ -22,9 +23,11 @@ function App() {
       <Route element={<Layout/>}>
         <Route element={<PersistLogin/>}>
           <Route path='/' element={<Home/>} />
+          <Route path='/home' element={<Home/>} />
           <Route path='/signup' element={<Signup/>} />
           <Route path='/login' element={<Login/>} />
           <Route path='/about' element={<About/>} />
+          <Route path='/checkout' element={<Checkout/>} />
           <Route path='/wishlist' element={<ProfileComp activeTab='wishlist'/>} />
           <Route path='/orders' element={<ProfileComp activeTab='orders'/>} />
           <Route path='/profile/address' element={<ProfileComp activeTab='addresses'/>} />

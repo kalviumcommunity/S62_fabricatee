@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import DynamicForm from "./DynamicForm";
 import axios from "@/api/axios";
 import { useCallback, useEffect, useState } from "react";
+import Loader from "@/pages/Loader";
 
 // Example usage
 const FORM_FIELDS = [
@@ -161,7 +162,7 @@ function FabricForm() {
     };
 
     if (isLoading) {
-      return <div>Loading...</div>;
+      return <Loader/>;
     }
     if(error)
       return <div className="text-red-500 bold- w-full font-semibold text-center bg-neutral pt-3">{error}</div>

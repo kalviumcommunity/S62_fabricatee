@@ -53,14 +53,14 @@ const Navbar = () => {
                 <span>Cart</span>
               </NavLink> */}
               <Cart/>
-              <NavLink to="/wishlist" className="p-2 flex flex-col items-center text-sm">
+              <NavLink to="/wishlist" className="p-2 mt-2 flex flex-col items-center text-sm">
                 <FaRegHeart size="18" />
                 <span>Wishlist</span>
               </NavLink>
 
               {auth?.loggedIn ? (
                 <div className="relative group">
-                  <NavLink to="/profile" className="p-2 flex flex-col items-center text-sm">
+                  <NavLink to="/profile" className="p-2 mt-1 flex flex-col items-center text-sm">
                     {auth?.profilePic?.url ? (
                       <img
                         src={auth.profilePic.url}
@@ -117,20 +117,25 @@ const Navbar = () => {
           </NavLink>
 
           <NavLink 
-            to="/design" 
+            to="/shop" 
             className={({isActive}) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-600' : 'text-gray-600'}`}
           >
             <IoHomeOutline size="24" />
             <span className="text-xs mt-1">Design</span>
           </NavLink>
 
-          <NavLink 
-            to="/cart" 
+          {/* <NavLink 
+            to="/" 
             className={({isActive}) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-600' : 'text-gray-600'}`}
           >
             <FaCartShopping size="24" />
             <span className="text-xs mt-1">Cart</span>
-          </NavLink>
+            </NavLink> */}
+            <div
+            className={({isActive}) => `flex flex-col items-center p-2 ${isActive ? 'text-blue-600' : 'text-gray-600'}`}
+            >
+              <Cart/>
+            </div>
 
           <NavLink 
             to="/wishlist" 

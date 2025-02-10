@@ -2,6 +2,7 @@ import axios from "@/api/axios";
 import DynamicForm from "./DynamicForm";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
+import Loader from "@/pages/Loader";
 
 const FORM_FIELDS = [
   {
@@ -151,7 +152,7 @@ function DesignForm() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Loader/>;
   }
 
   return (

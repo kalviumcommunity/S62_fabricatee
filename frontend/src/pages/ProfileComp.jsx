@@ -196,6 +196,45 @@ const ProfileComp = (props) => {
     }
   }
 
+  const handleMoveToCart = async (wishlistId) => {
+    let deletedItem; // This will store the deleted item
+  
+    // Filter out the desired item from the wishlist
+    const updatedWishlist = wishlist.filter((ele) => {
+      if (ele._id === wishlistId) {
+        deletedItem = ele; // Store the deleted item
+        return false; // Remove it from the new wishlist
+      }
+      return true;
+    });
+  
+    // Update the wishlist state to remove the item
+    setWishlist(updatedWishlist);
+  
+    // Make a copy of the current cart, if the `auth` object exists
+    const currCart = auth?.cart || []; // Fallback in case the cart is empty or undefined
+  
+    // Add the deleted item to the cart
+    if (deletedItem) {
+      currCart.push(deletedItem);
+      console.log('currCart', currCart)
+    }
+
+    try {
+      await axios.put(`/api/user/${auth._id}`, {cart: currCart, wishlist: updatedWishlist});
+      // Update the auth state with the modified cart and wishlist
+      setAuth((prev) => ({
+        ...prev,
+        cart: currCart,
+        wishlist: updatedWishlist,
+      }));
+    } catch (error) {
+      console.log(error.message);
+    }
+  
+
+  };
+
   const triggerImageUpload = () => {
     fileInputRef.current?.click();
   };
@@ -416,7 +455,11 @@ const ProfileComp = (props) => {
               )}
 
               {activeTab === 'wishlist' && (
-                <WishlistComp wishlist={wishlist} handleDelete={handleWishlistDelete}/>
+                <WishlistComp 
+                wishlist={wishlist} 
+                handleDelete={handleWishlistDelete}
+                handleMoveToCart={handleMoveToCart}
+                />
               )}
 
               {activeTab === 'addresses' && (
