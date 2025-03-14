@@ -16,6 +16,11 @@ import ProfileComp from './pages/ProfileComp'
 import FabricPage from './pages/FabricPage'
 import CustomizeDesignPage from './pages/CustomizeDesignPage'
 import Checkout from './pages/Checkout'
+import OrderConfirmation from './pages/OrderConfirmation'
+import OrderFailed from './pages/OrderFailed'
+import ErrorComponent from './components/ErrorComponent'
+import DesignPage from './pages/DesignPage'
+import AllUserOrders from './pages/AllUserOrders'
 
 function App() {
   return (
@@ -27,7 +32,12 @@ function App() {
           <Route path='/signup' element={<Signup/>} />
           <Route path='/login' element={<Login/>} />
           <Route path='/about' element={<About/>} />
-          <Route path='/checkout' element={<Checkout/>} />
+          <Route path='/error' element={<ErrorComponent/>} />
+          <Route path='/checkout'>
+            <Route index element={<Checkout/>}/>
+            <Route path='confirmed' element={<OrderConfirmation/>} />
+            <Route path='failed' element={<OrderFailed/>} />
+          </Route>
           <Route path='/wishlist' element={<ProfileComp activeTab='wishlist'/>} />
           <Route path='/orders' element={<ProfileComp activeTab='orders'/>} />
           <Route path='/profile/address' element={<ProfileComp activeTab='addresses'/>} />
@@ -36,6 +46,7 @@ function App() {
           <Route path='/fabricform' element={<FabricForm/>} />
           <Route path='/fabricform/:id' element={<FabricForm/>} />
           <Route path='/fabric/:id' element={<FabricPage/>} />
+          <Route path='/design/:id' element={<DesignPage/>} />
           <Route path='/posts' element={<h4>Posts</h4>} />
           {/* <Route path='/cart' element={<Cart/>} /> */}
           <Route path='/shop'>
@@ -43,6 +54,7 @@ function App() {
             <Route path='designs' element={<DesignsBrowse/>} />
             <Route path='fabrics' element={<Fabrics/>} />
           </Route>
+          <Route path='/view-user-orders' element={<AllUserOrders/>} />
           <Route element={<RequireAuth/>}>
             <Route path='/profile' element={<ProfileComp/>} />
           </Route>
