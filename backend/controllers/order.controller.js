@@ -211,7 +211,7 @@ export const getUserOrders = async (req, res) => {
       .send({ message: "user orders fetched", success: true, orders });
   } catch (error) {
     console.log("error in fetching user order details", error.message);
-    return res.status(200).send({
+    return res.status(500).send({
       message: "Internal Server Error in Fetching User Orders",
       success: false,
     });
@@ -229,7 +229,7 @@ export const getOrdersByUser = async (req, res) => {
       .send({ message: "user orders fetched", success: true, orders });
   } catch (error) {
     console.log("error in fetching user order details", error.message);
-    return res.status(200).send({
+    return res.status(500).send({
       message: "Internal Server Error in Fetching User Orders",
       success: false,
     });
