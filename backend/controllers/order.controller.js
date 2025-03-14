@@ -8,8 +8,16 @@ export const createOrder = async (req, res) => {
   try {
     const { userId, items, price } = req.body;
 
+    // Validate environment variables
+    if (!process.env.RZYPAY_ID || !process.env.RZYPAY_SECRET) {
+      return res.status(500).json({
+        message: "Razorpay credentials missing",
+        success: false,
+      });
+    }
+
     // Input validation
-    if (!userId || !items || !price) {
+    if (!userId || !items || !price || !price.total) {
       return res.status(400).json({
         message: "Missing required fields",
         success: false,
@@ -24,7 +32,7 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Check if user exists before proceeding
+    // Check if user exists
     const user = await usersModel.findById(userId);
     if (!user) {
       return res.status(404).json({
@@ -39,9 +47,10 @@ export const createOrder = async (req, res) => {
     });
 
     const options = {
-      amount: Math.round(price.total * 100), // Ensure amount is rounded to avoid decimal issues
+      amount: Math.round(price.total * 100),
       currency: "INR",
       receipt: crypto.randomBytes(10).toString("hex"),
+      payment_capture: 1,
     };
 
     // Create Razorpay order
@@ -194,6 +203,24 @@ export const getOrder = async (req, res) => {
 export const getUserOrders = async (req, res) => {
   try {
     const userId = req.userId;
+    const orders = await Order.find({ userId: userId })
+      .populate([{ path: "items.design" }, { path: "items.fabric" }])
+      .sort({ createdAt: -1 });
+    return res
+      .status(200)
+      .send({ message: "user orders fetched", success: true, orders });
+  } catch (error) {
+    console.log("error in fetching user order details", error.message);
+    return res.status(200).send({
+      message: "Internal Server Error in Fetching User Orders",
+      success: false,
+    });
+  }
+};
+
+export const getOrdersByUser = async (req, res) => {
+  try {
+    const userId = req.params.userId;
     const orders = await Order.find({ userId: userId })
       .populate([{ path: "items.design" }, { path: "items.fabric" }])
       .sort({ createdAt: -1 });
