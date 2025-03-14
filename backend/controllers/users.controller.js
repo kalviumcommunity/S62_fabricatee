@@ -6,7 +6,9 @@ import dotenv from "dotenv";
 import cloudinary from "../utils/cloudinary.js";
 import fs from "fs";
 
-dotenv.config();
+dotenv.config({
+  path: "./backend/.env",
+});
 
 const SECRET_KEY = process.env.SECRET_KEY;
 const REFRESH_SECRET_KEY = process.env.REFRESH_SECRET_KEY;
