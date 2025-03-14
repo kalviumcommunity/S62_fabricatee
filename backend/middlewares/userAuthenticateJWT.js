@@ -1,9 +1,7 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
-dotenv.config({
-  path: "./backend/.env",
-});
+dotenv.config();
 
 const SECRET_KEY = process.env.REFRESH_SECRET_KEY;
 
