@@ -16,6 +16,7 @@ import DynamicForm from '@/components/DynamicForm';
 import Modal from '@/components/Modal';
 import axios from '@/api/axios';
 import CartProductCard from '@/components/CartProductCard';
+import Loader from './Loader';
 
 const Checkout = () => {
   // State management
@@ -118,9 +119,9 @@ const Checkout = () => {
     if (auth?.address) {
       setAddresses(auth.address);
       // Set the first address as default if available
-      if (auth.address.length > 0 && !selectedAddress) {
-        setSelectedAddress(auth.address[0]);
-      }
+      // if (auth.address.length > 0 && !selectedAddress) {
+      //   setSelectedAddress(auth.address[0]);
+      // }
     }
   }, [auth]);
 
@@ -214,7 +215,7 @@ const Checkout = () => {
             
             // Filter out ordered items from cart
             const updatedCart = auth?.cart?.filter(
-              (cartItem) => !orderItems.some((item) => item._id === cartItem._id.toString())
+              (cartItem) => !orderItems.some((item) => item._id === cartItem._id)
             );
   
             // Verify payment with backend
@@ -230,14 +231,6 @@ const Checkout = () => {
             
             // Update local state
             const currentDate = new Date().toLocaleDateString('en-GB');
-            const updatedOrders = [...(auth?.orders || []), verificationData.id];
-            
-            setAuth(prev => ({
-              ...prev,
-              orders: updatedOrders,
-              cart: updatedCart
-            }));
-  
             // Prepare receipt data
             const receiptBody = {
               userId: auth?._id,
@@ -250,11 +243,20 @@ const Checkout = () => {
                   coupon: appliedCoupon ? couponCode : null
                 },
                 delivery: shipping,
-                total,
+                total:total,
               },
               createdAt: currentDate,
+              status: "Confirmed",
               orderId: res.razorpay_order_id
             };
+            const updatedOrders = [...(auth?.orders || []), receiptBody];
+            
+            setAuth(prev => ({
+              ...prev,
+              orders: updatedOrders,
+              cart: updatedCart
+            }));
+  
   
             // Navigate based on verification result
             navigate(verificationData.success ? './confirmed' : './failed', { state: receiptBody });
@@ -268,7 +270,7 @@ const Checkout = () => {
         // Handle modal closing
         modal: {
           ondismiss: () => {
-            console.log('Payment modal closed');
+            console.log('Payment modal closed', data.id);
             handlePaymentError('modal_close', data.id);
           }
         },
@@ -277,7 +279,7 @@ const Checkout = () => {
         on: {
           payment_failed: (response) => {
             console.error('Payment failed:', response);
-            handlePaymentError('payment', response);
+            handlePaymentError('payment', data.id, response);
           }
         },
   
@@ -297,10 +299,16 @@ const Checkout = () => {
   };
   
   // Centralized error handler
-  const handlePaymentError = (type, orderId, error = null) => {
+  const handlePaymentError = async (type, orderId=undefined, error = null) => {
     let errorMessage = 'Payment failed. Please try again.';
-
-    
+    if(orderId){
+      try{
+        await axios.put(`/api/order/${orderId}`, {status: 'Payment Failed'});  
+        console.log("payment failed updated to order");  
+      }catch(err){
+        console.log('Error in updating order details');
+      }
+    }
     
     switch (type) {
       case 'initialization':
@@ -372,6 +380,7 @@ const Checkout = () => {
     setAddressError('');
     if (value === 'add_new') {
       setIsAddAddressModalOpen(true);
+      setSelectedAddress(null);
     } else {
       setSelectedAddress(value);
     }
@@ -486,6 +495,10 @@ const Checkout = () => {
       </Button>
     </div>
   );
+
+  // if(isLoading){
+  //   return <Loader/>
+  // }
 
   return (
     <div className="max-w-[100vw] min-h-[100vh] mx-0 p-6 flex flex-col-reverse lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6 bg-neutral">

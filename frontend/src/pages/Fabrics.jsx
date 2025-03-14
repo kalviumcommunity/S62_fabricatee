@@ -99,6 +99,7 @@ function Fabrics() {
         <div className="grid grid-cols-1 bg-neutral sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
             {filteredProducts.map((product, index) => (
               <ProductCard
+                id={product._id}
                 key={index}
                 title={product.name}
                 rating={product.rating||0}

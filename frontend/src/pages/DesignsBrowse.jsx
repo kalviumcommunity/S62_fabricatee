@@ -24,7 +24,7 @@ function DesignsBrowse() {
 
   const handleDeleteDesign = async (id) => {
     try {
-      const res = await axios.delete(`/api/design/${id}`);
+      const res = await axios.delete(`/api/design/${id}`, {withCredentials: true});
       if (!res.data.success) {
         throw Error(res.data.message);
       }
@@ -122,19 +122,20 @@ function DesignsBrowse() {
         />
       </div>
 
-      <div className="flex bg-neutral items-start justify-center w-full">
-        <div className="grid grid-cols-2 bg-neutral sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="flex bg-neutral items-start justify-center w-full overflow-hidden p-5">
+        <div className="grid grid-cols-2 bg-neutral sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-2">
           {filteredProducts.map((product, index) => (
               <ProductCard
-                key={product._id || index}
+                key={index}
+                id={product._id}
                 title={product.name}
                 mrp={product.stitching?.mrp}
                 sp={product.stitching?.sp}
                 url={product.images?.[0]?.url}
                 btnTxt="Customize Now"
                 onAddToCart={()=>{navigator(`./customize/${product._id}`)}}
-                onUpdate={auth.loggedIn ? () => navigator(`/designform/${product._id}`) : undefined}
-                onDelete={auth.loggedIn ? () => handleDeleteDesign(product._id) : undefined}
+                onUpdate={auth.role=='admin' ? () => navigator(`/designform/${product._id}`) : undefined}
+                onDelete={auth.role=='admin' ? () => handleDeleteDesign(product._id) : undefined}
                 priceType='design'
               />
           ))}
